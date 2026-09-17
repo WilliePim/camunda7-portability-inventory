@@ -1,0 +1,19 @@
+# cloned repositories under analysis
+external/
+
+# script outputs
+out/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# build outputs
+target/
+build/
+__pycache__/
+*.pyc
+.venv/
