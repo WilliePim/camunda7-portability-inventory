@@ -41,7 +41,7 @@ The external-task style of C7 (`ExternalTaskHandler`, `complete`, `handleFailure
 
 - **231 delegate/listener classes** (185 `JavaDelegate`, 25 `ExecutionListener`, 22 `TaskListener`) in the consulting repo, 24 + 2 in the examples.
 - The API has no in-transaction hook: work is done by a subscriber *outside* the engine transaction and completed via a future.
-- **47 of the 231 delegate files call engine services from inside the delegate** via `execution.getProcessEngineServices()` (72 sites total): `startProcessInstanceByKey` (4), `correlateMessage` (2), `taskService.complete` (5), `taskService.createTaskQuery` (4), `historyService.create*Query` (13), `repositoryService.*` (9), `identityService.*` (17), `caseService.*` (4).
+- **47 of the 231 delegate/listener classes call engine services from inside the delegate** through four entry points (72 sites total): `DelegateExecution.getProcessEngineServices()` (57), `DelegateTask.getProcessEngineServices()` (10), `Context.getProcessEngineConfiguration()` (3), `Context.getCommandContext()` (2). Engine calls reached through them include `startProcessInstanceByKey` (4), `correlateMessage` (2), `taskService.complete` (5), `taskService.createTaskQuery` (4), `historyService.create*Query` (13), `repositoryService.*` (9), `identityService.*` (17), `caseService.*` (4).
 - Some of these calls exist in the API (start, correlate) but the **semantics change**: in C7 they run in the same transaction as the calling delegate (atomic, rolled back together); in the API they are independent async commands. This is the pattern that decides the effort of a migration, and it is invisible to BPMN-level analysers.
 
 Migration implication: every delegate becomes a worker; every engine call from inside a delegate becomes a separate command with its own failure mode. Not an API gap by design, but it deserves a documented statement ("delegates are out of scope; here is the rewrite shape").
@@ -56,7 +56,7 @@ Migration implication: every delegate becomes a worker; every engine call from i
 | `repositoryService.createProcessDefinitionQuery / createDeploymentQuery / createDecisionDefinitionQuery` | 33 |
 | `managementService.createJobQuery` | 5 |
 
-The API is push-only (`subscribeForTask`); `UserTaskSupport` gives a local in-memory list of *subscribed* tasks, which is not a query. Every custom tasklist, dashboard, "where is my instance", or reconciliation batch in a C7 app is built on queries. This is the largest surface with no counterpart.
+The API is push-only (`subscribeForTask`); `UserTaskSupport` gives a local in-memory list of *subscribed* tasks, which is not a query. Every custom tasklist, dashboard, "where is my instance", or reconciliation batch in a C7 app is built on queries. Queries account for 160 sites with no counterpart; identity / authorization / filters (§D) accounts for more, 317.
 
 Ask: either a minimal read-only `TaskQueryApi` / `ProcessInstanceQueryApi` (by business key, definition key, tenant, activity — the keys already in `CommonRestrictions`), or an explicit "queries are out of scope, use engine-native or projections" note in the docs.
 
@@ -69,7 +69,7 @@ Ask: document that history is engine-native and that audit requirements must be 
 
 ### D. Identity, authorization, filters
 
-- `identityService.*` 151 sites, `authorizationService.*` 121, `filterService.*` 45, plus `ReadOnlyIdentityProvider`, LDAP/Keycloak identity plugins, `AuthenticationExtractor`, `ProcessEngineAuthenticationFilter`.
+- `identityService.*` 151 sites, `authorizationService.*` 121, `filterService.*` 45, plus `ReadOnlyIdentityProvider`, LDAP/Keycloak identity plugins, `ProcessEngineAuthenticationFilter`.
 - Zero counterpart. Clearly by design, but it is the second-largest block of code in the consulting repo and is common in enterprise C7 apps (provisioning users/groups/tenants at startup, candidate group logic).
 
 ### E. Process instance lifecycle and variables outside tasks
@@ -101,7 +101,7 @@ Starting at an element is expressible (`StartProcessByDefinitionAtElementCmd`, `
 
 ### G. Engine internals (`org.camunda.bpm.engine.impl.*`)
 
-- **617 imports across 176 files** (consulting) + 81 (examples). Top packages: `impl.cfg` 122, `impl.persistence` 66, `impl.bpmn` 65, `impl.pvm` 63, `impl.history` 51, `impl.interceptor` 46, `impl.context` 28, `impl.jobexecutor` 21.
+- **617 imports across 176 files** (consulting) + 81 (examples). Top packages: `impl.cfg` 122, `impl.persistence` 66, `impl.bpmn` 65, `impl.pvm` 63, `impl.history` 51, `impl.interceptor` 46, `impl.util` 33, `impl.context` 28, `impl.jobexecutor` 21.
 - Concrete shapes: `ProcessEnginePlugin` / `AbstractProcessEnginePlugin` (49), `BpmnParseListener` / `AbstractBpmnParseListener` (18), custom `ActivityBehavior` (5), `CommandInterceptor` (4), `Command<T>` (3), `SessionFactory` (2), `TenantIdProvider` (4), `Context.getCommandContext()` / `Context.getProcessEngineConfiguration()` (44).
 - Unportable by definition. Not an API concern, but a C7-exit assessment must count them: each one is a design decision, not a rewrite.
 
@@ -222,14 +222,14 @@ Ask: document three points:
 | User task complete / assign / by-error | 37 | yes | ports |
 | Deployment, DMN evaluate | 16 | yes | ports |
 | Delegates & listeners in shared transaction | 257 classes, 73 nested engine calls | no | rewrite as workers; semantics change |
-| Queries (task, history, runtime, repository, job) | 160 | no | largest gap; needs a stance |
+| Queries (task, history, runtime, repository, job) | 160 | no | fewer sites than identity / authorization / filters; needs a stance |
 | History infrastructure | 14 classes | no | engine-native; document |
 | Identity / authorization / filters | 317 | no | out of scope; document |
-| Instance lifecycle, instance variables | 34 | partial | `EXECUTION_ID` may cover part; document |
+| Instance lifecycle, instance variables | 34 | partial | `EXECUTION_ID` is rejected for message correlation, honoured for signals and task subscriptions (§E); document |
 | Jobs / incidents / retries (ops) | 16 | partial | `FailTaskCmd` only |
 | Engine internals (`impl.*`) | 698 imports / 201 files | no | design work, not porting |
 | CMMN | 41 | no | dead end; state it |
-| Delegate context reads | 807 | partial | meta keys undocumented |
+| Delegate context reads | 807 | partial | per-adapter meta-key tables exist but mark no key as guaranteed and omit `processInstanceId`, `businessKey`, `formKey`, `retries`, `processDefinitionVersionTag` (remote only), `reason` (§I) |
 | Variable scope / typed values | 21 | partial | document adapter behaviour |
 
 ## 4. Patterns from banking codebases (anonymised, from experience — not from the two repos above)

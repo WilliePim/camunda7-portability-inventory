@@ -98,6 +98,7 @@ Engine implementation classes (`TaskServiceImpl`, …) count as their service in
 | 2G | impl.pvm imports (consulting) | consulting | 62 | 63 | +1 |  | 63 | `inventory.py 2G.pkg.pvm` |
 | 2G | impl.history imports (consulting) | consulting | 50 | 51 | +1 |  | 51 | `inventory.py 2G.pkg.history` |
 | 2G | impl.interceptor imports (consulting) | consulting | 46 | 46 | +0 |  | 46 | `inventory.py 2G.pkg.interceptor` |
+| 2G | impl.util imports (consulting) | consulting | — | 33 |  |  | 33 | `inventory.py 2G.pkg.util` |
 | 2G | impl.context imports (consulting) | consulting | 28 | 28 | +0 |  | 28 | `inventory.py 2G.pkg.context` |
 | 2G | impl.jobexecutor imports (consulting) | consulting | 21 | 21 | +0 |  | 21 | `inventory.py 2G.pkg.jobexecutor` |
 | 2G | ProcessEnginePlugin / AbstractProcessEnginePlugin | both | 42 | 49 | +7 | 6 | 43 | `inventory.py 2G.plugin` |
@@ -287,7 +288,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
    - 3 `Context.getProcessEngineConfiguration()`
    - 2 `Context.getCommandContext()`
 
-   The wording is not amended. The draft's 59 is closest to the 57 `DelegateExecution` sites; its exact rule is not reproducible.
+   The wording has since been amended to name all four entry points with their site counts. The draft's 59 is closest to the 57 `DelegateExecution` sites; its exact rule is not reproducible.
 10. **Per-method breakdown.** Corrected to the "via entry point" counts in the consulting repository:
     - `startProcessInstanceByKey` 3 → 4
     - `taskService.complete` 4 → 5
@@ -301,16 +302,16 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 
 ### Sections 2B–2M
 
-11. **§2B "This is the largest surface with no counterpart" and §3 "largest gap".** Unsupported by the counts. Queries total 160 sites, while identity / authorization / filters total 317 and delegate context reads total 807. Not amended.
+11. **§2B "This is the largest surface with no counterpart" and §3 "largest gap".** Unsupported by the counts. Queries total 160 sites, while identity / authorization / filters total 317 and delegate context reads total 807. Amended: §2B and the §3 verdict now compare queries (160) with identity / authorization / filters (317).
 12. **§2C `DynamicRemovalTimeCalculationStrategy` (2).** This is not a Camunda type. It is an interface declared in the snippet (`com.camunda.bpm.demo.engine_plugin_variable_depending_history_ttl.strategy`), with 2 implementations. The Camunda extension point behind it is `HistoryRemovalTimeProvider`, implemented once. The count is correct for the local interface; not amended. Also: custom `HistoryLevel` 2 → 4 (2 in the examples repository).
-13. **§2D identity items.** The row lists `AuthenticationExtractor`, which resolves to `org.camunda.optimize.plugin.security.authentication.AuthenticationExtractor`: an Optimize plugin interface, not an engine or web-app type. "Second-largest block of code in the consulting repo" has no measure behind it. Not amended. Counts corrected: `identityService.*` 151, `authorizationService.*` 121, `filterService.*` 45.
+13. **§2D identity items.** The row lists `AuthenticationExtractor`, which resolves to `org.camunda.optimize.plugin.security.authentication.AuthenticationExtractor`: an Optimize plugin interface, not an engine or web-app type. Amended: removed from §D. "Second-largest block of code in the consulting repo" has no measure behind it; not amended. Counts corrected: `identityService.*` 151, `authorizationService.*` 121, `filterService.*` 45.
 14. **§2F `createIncident / resolveIncident` (9) → 0.** The grep hits are:
     - method declarations and `super.resolveIncident(...)` calls inside custom `IncidentHandler` classes;
     - a generated OpenAPI REST client (`snippets/camunda-openapi-client`);
     - a hand-written `DelegateExecution` implementation.
 
     None is a call on `RuntimeService` or `DelegateExecution`.
-15. **§2G "Top packages".** The list omits `impl.util`, which has 33 imports in the consulting repository and ranks 7th, ahead of `impl.context` (28) and `impl.jobexecutor` (21). Not amended. `Context.getCommandContext()` / `getProcessEngineConfiguration()` 4 → 44: the draft's 4 is not reproducible (calls inside delegate scopes only: 5).
+15. **§2G "Top packages".** The list omits `impl.util`, which has 33 imports in the consulting repository and ranks 7th, ahead of `impl.context` (28) and `impl.jobexecutor` (21). Amended: `impl.util` 33 added to the list (`inventory.py 2G.pkg.util`; ranking from `inventory.py --explain 2G.imports`). `Context.getCommandContext()` / `getProcessEngineConfiguration()` 4 → 44: the draft's 4 is not reproducible (calls inside delegate scopes only: 5).
 16. **§2H `caseService.*` ≈ 45 → 31.** Grep for `caseService.` finds 0 sites in the consulting repository; all 31 are `getCaseService().…` chains.
 17. **§2I draft sum.** The §2I reads summed to 803, while §3 reported "~700". The measured sum is 807.
 18. **§2L.**
@@ -320,7 +321,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 ### Section 3
 
 19. **"Sites (both repos)" held consulting-only values.** The rows "231 classes, 59 nested engine calls" and "615 imports / 176 files" were consulting-only. Corrected to both-repository values: 257 classes, 73 entry-point sites, 698 imports, 201 files. The consulting-only values remain in §2A and §2G.
-20. **Verdicts contradicted by §E and §I, not amended (outside E/I/J):**
+20. **Verdicts contradicted by §E and §I (since amended in §3):**
     - "`EXECUTION_ID` may cover part": the adapter rejects `EXECUTION_ID` for message correlation and honours it only for signals and task subscriptions.
     - "meta keys undocumented": the adapter docs contain meta-key tables.
 
