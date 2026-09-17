@@ -56,7 +56,7 @@ Migration implication: every delegate becomes a worker; every engine call from i
 | `repositoryService.createProcessDefinitionQuery / createDeploymentQuery / createDecisionDefinitionQuery` | 33 |
 | `managementService.createJobQuery` | 5 |
 
-The API is push-only (`subscribeForTask`); `UserTaskSupport` gives a local in-memory list of *subscribed* tasks, which is not a query. Every custom tasklist, dashboard, "where is my instance", or reconciliation batch in a C7 app is built on queries. This is the largest surface with no counterpart.
+The API is push-only (`subscribeForTask`); `UserTaskSupport` gives a local in-memory list of *subscribed* tasks, which is not a query. Every custom tasklist, dashboard, "where is my instance", or reconciliation batch in a C7 app is built on queries. Queries account for 160 sites with no counterpart; identity / authorization / filters (§D) accounts for more, 317.
 
 Ask: either a minimal read-only `TaskQueryApi` / `ProcessInstanceQueryApi` (by business key, definition key, tenant, activity — the keys already in `CommonRestrictions`), or an explicit "queries are out of scope, use engine-native or projections" note in the docs.
 
@@ -222,7 +222,7 @@ Ask: document three points:
 | User task complete / assign / by-error | 37 | yes | ports |
 | Deployment, DMN evaluate | 16 | yes | ports |
 | Delegates & listeners in shared transaction | 257 classes, 73 nested engine calls | no | rewrite as workers; semantics change |
-| Queries (task, history, runtime, repository, job) | 160 | no | largest gap; needs a stance |
+| Queries (task, history, runtime, repository, job) | 160 | no | fewer sites than identity / authorization / filters; needs a stance |
 | History infrastructure | 14 classes | no | engine-native; document |
 | Identity / authorization / filters | 317 | no | out of scope; document |
 | Instance lifecycle, instance variables | 34 | partial | `EXECUTION_ID` may cover part; document |
