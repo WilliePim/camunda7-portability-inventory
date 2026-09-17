@@ -250,7 +250,7 @@ All numeric corrections in `report.md` use the Measured column. Where the report
 
 ## 3. Claims in report.md that were wrong or unsupported
 
-Each item states the problem, the evidence, and the correction applied. "Not amended" marks prose outside the numbers and sections E, I and J, which the task left untouched.
+Each item states the problem, the evidence, and the correction applied. "Not amended" marks prose that was left as written.
 
 ### Method and corpus
 
@@ -282,7 +282,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 ### Section 2A (headline)
 
 8. **"184 `JavaDelegate`" → 185.** The additional class is `DelegationCodeTestProxy` (see item 1). It implements both `JavaDelegate` and `ExecutionListener`, so the per-interface counts (185 + 25 + 22 = 232) exceed the 231 distinct classes.
-9. **"44 of the 231 delegate files … via `execution.getProcessEngineServices()` (59 sites total)" → 47 / 72.** The corrected numbers use the Task 2 definition (four entry points). The sentence names only one entry point; the 72 consulting sites split into:
+9. **"44 of the 231 delegate files … via `execution.getProcessEngineServices()` (59 sites total)" → 47 / 72.** The corrected numbers count all four entry points (§2). The sentence names only one entry point; the 72 consulting sites split into:
    - 57 `DelegateExecution.getProcessEngineServices()`
    - 10 `DelegateTask.getProcessEngineServices()`
    - 3 `Context.getProcessEngineConfiguration()`
@@ -298,7 +298,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
     - `identityService.*` 6 → 17
     - `caseService.*` 13 → 4
 
-    The listed groups account for 58 engine-method calls reached through entry points. One entry point can feed several calls through a local variable, so this number is not a subset of the 72 entry-point sites. §2 lists all methods. 16 further call sites use `DelegateExecution.getProcessEngine()`, which the Task 2 definition does not count.
+    The listed groups account for 58 engine-method calls reached through entry points. One entry point can feed several calls through a local variable, so this number is not a subset of the 72 entry-point sites. §2 lists all methods. 16 further call sites use `DelegateExecution.getProcessEngine()`, which the entry-point definition in §2 does not include.
 
 ### Sections 2B–2M
 
@@ -357,7 +357,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 
 ## 5. Other adapter findings (not added to report.md)
 
-These findings came up while reading the adapter. Their report sections were outside the amendment scope.
+These findings came up while reading the adapter and are not part of report.md. Issue drafts for them are in [issues/](issues/).
 
 - **Embedded user-task `CompleteTaskByErrorCmd`** calls `taskService.handleBpmnError(taskId, errorCode)`: the error message and payload are not passed (`emb: task/completion/C7UserTaskCompletionApiImpl.kt:47-50`). The remote adapter passes both (`rem: task/completion/UserTaskCompletionApiImpl.kt:47-54`). Relevant to §1 and §K.
 - **Embedded `SendSignalCmd` tenant checks** require the opposite key to be present: `require(restrictions.containsKey(WITHOUT_TENANT_ID))` for `tenantId` (`emb: correlation/SignalApiImpl.kt:47-59`). So `tenantId` alone or `withoutTenantId` alone fails. The remote adapter negates the check (`rem: correlation/SignalApiImpl.kt:51-63`).

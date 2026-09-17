@@ -1,4 +1,4 @@
-"""Task 1: reproduce every count in report.md (method table, sections 1, 2 and 3).
+"""Reproduce every count in report.md (method table, sections 1, 2 and 3).
 
     python scripts/inventory.py                   # markdown table on stdout
     python scripts/inventory.py --json out/inventory.json
