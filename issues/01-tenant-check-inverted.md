@@ -1,87 +1,43 @@
-# Draft issue 01
+# Embedded SignalApiImpl rejects tenantId or withoutTenantId when used alone
 
-**Proposed title:** Embedded `SignalApiImpl` rejects `tenantId` or `withoutTenantId` used alone
+### Describe the bug
 
-**Repository:** `bpm-crafters/process-engine-adapters-camunda-7`
-**Verified against:** commit `d2be36eca2edf24d1e1a43540cee77d9e9dffd21` (upstream `HEAD` on 2026-09-17)
-**Affected module:** `engine-adapter/c7-embedded-core`
-**Affected class:** `dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl`, method `applyRestrictions`
-- `engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/correlation/SignalApiImpl.kt:47-59`
+In `c7-embedded-core`, `SignalApiImpl.applyRestrictions` checks the tenant restrictions the wrong way round. Each `require` expects the other key to be present instead of absent ([SignalApiImpl.kt#L47-L59](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/correlation/SignalApiImpl.kt#L47-L59)). Because of this, a signal can't be sent with only `tenantId` or only `withoutTenantId`, so tenant-scoped signals don't work with the embedded adapter.
 
-## Expected behaviour
+### To Reproduce
 
-Both keys are listed as supported restrictions (`SignalApiImpl.kt:37-41`), and they are mutually exclusive:
-- `tenantId` alone sends the signal with `SignalEventReceivedBuilder.tenantId(value)`;
-- `withoutTenantId` alone sends it with `withoutTenantId()`;
-- the command is rejected only when both keys are present.
-
-Two other places in the adapter already behave this way:
-- the embedded message-correlation code checks for the *absence* of the other key (`engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/correlation/MessageCorrelationBuilderExtensions.kt:16-23`);
-- the remote `SignalApiImpl` does the same (`engine-adapter/c7-remote-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/correlation/SignalApiImpl.kt:51-63`), and its test sends a signal with `tenantId` alone (`engine-adapter/c7-remote-core/src/test/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/correlation/SignalApiImplTest.kt:42-55`).
-
-## Actual behaviour
-
-The `require` conditions are not negated:
+Send a signal with a single tenant restriction through the embedded adapter:
 
 ```kotlin
-CommonRestrictions.TENANT_ID -> this.tenantId(value).apply {
-  require(restrictions.containsKey(CommonRestrictions.WITHOUT_TENANT_ID)) { ... }   // line 48
-}
-CommonRestrictions.WITHOUT_TENANT_ID -> this.withoutTenantId().apply {
-  require(restrictions.containsKey(CommonRestrictions.TENANT_ID)) { ... }           // line 55
-}
-```
-
-As a result:
-- `tenantId` alone fails with `IllegalArgumentException`.
-- `withoutTenantId` alone fails with `IllegalArgumentException`.
-- Both keys together pass both checks, and the builder receives both `tenantId(value)` and `withoutTenantId()`.
-
-The check runs inside `EngineCommandExecutor.execute`, which uses `CompletableFuture.supplyAsync` (`engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/shared/EngineCommandExecutor.kt:30`). The returned future therefore completes exceptionally, and `get()` throws `ExecutionException`.
-
-The error message also names the same key twice: it interpolates `WITHOUT_TENANT_ID` in both places (`SignalApiImpl.kt:49-50`, `:56-57`).
-
-The embedded `SignalApiImplTest` has no case with tenant restrictions (`engine-adapter/c7-embedded-core/src/test/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/correlation/SignalApiImplTest.kt:33-49`).
-
-## Reproduction sketch
-
-Spring Boot application with the Camunda 7 embedded adapter. `signalApi` is the injected `dev.bpmcrafters.processengineapi.correlation.SignalApi`.
-
-```kotlin
-import dev.bpmcrafters.processengineapi.CommonRestrictions
-import dev.bpmcrafters.processengineapi.correlation.SendSignalCmd
-
-// 1. tenantId alone: expected to send, actually throws
 signalApi.sendSignal(
   SendSignalCmd(
     signalName = "mySignal",
     payloadSupplier = { emptyMap() },
     restrictions = mapOf(CommonRestrictions.TENANT_ID to "tenant-a"),
   )
-).get() // ExecutionException, cause IllegalArgumentException("Illegal restriction combination. ...")
-
-// 2. withoutTenantId alone: expected to send, actually throws
-signalApi.sendSignal(
-  SendSignalCmd(
-    signalName = "mySignal",
-    payloadSupplier = { emptyMap() },
-    restrictions = mapOf(CommonRestrictions.WITHOUT_TENANT_ID to "true"),
-  )
-).get() // ExecutionException, cause IllegalArgumentException
-
-// 3. both keys: expected to be rejected, actually passes the adapter's checks
-signalApi.sendSignal(
-  SendSignalCmd(
-    signalName = "mySignal",
-    payloadSupplier = { emptyMap() },
-    restrictions = mapOf(
-      CommonRestrictions.TENANT_ID to "tenant-a",
-      CommonRestrictions.WITHOUT_TENANT_ID to "true",
-    ),
-  )
 ).get()
 ```
 
-## Impact
+The same happens with `mapOf(CommonRestrictions.WITHOUT_TENANT_ID to "true")`.
 
-With the embedded adapter, a signal cannot be scoped by tenant: `tenantId` or `withoutTenantId` alone always fails, and the only combination the adapter accepts contains both mutually exclusive keys.
+### Expected behavior
+
+`tenantId` alone sends the signal for that tenant, `withoutTenantId` alone sends it without a tenant, and only a combination of both keys is rejected.
+
+The embedded message correlation already works this way ([MessageCorrelationBuilderExtensions.kt#L16-L23](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/correlation/MessageCorrelationBuilderExtensions.kt#L16-L23)), and so does the remote `SignalApiImpl` ([SignalApiImpl.kt#L51-L63](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/engine-adapter/c7-remote-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/correlation/SignalApiImpl.kt#L51-L63)). The remote test sends a signal with `tenantId` alone ([SignalApiImplTest.kt#L42-L55](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/engine-adapter/c7-remote-core/src/test/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/correlation/SignalApiImplTest.kt#L42-L55)).
+
+### Actual behavior
+
+`get()` throws an `ExecutionException` caused by `IllegalArgumentException: Illegal restriction combination. ...`. The check runs inside `EngineCommandExecutor.execute`, which uses `CompletableFuture.supplyAsync` ([EngineCommandExecutor.kt#L30](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/shared/EngineCommandExecutor.kt#L30)), so the future completes exceptionally.
+
+Passing both keys gets past the check, and both `tenantId(...)` and `withoutTenantId()` are called on the builder.
+
+### Environment
+
+- process-engine-adapters-camunda-7: commit `d2be36e`, the latest on `develop` as of 2026-09-17
+- Module: `c7-embedded-core`
+- process-engine-api: 1.7 (the version set in the adapter's `pom.xml`)
+
+### Additional context
+
+The error message names `withoutTenantId` twice (lines 49-50 and 56-57). The embedded `SignalApiImplTest` has no test with tenant restrictions ([SignalApiImplTest.kt#L33-L49](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/engine-adapter/c7-embedded-core/src/test/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/correlation/SignalApiImplTest.kt#L33-L49)).

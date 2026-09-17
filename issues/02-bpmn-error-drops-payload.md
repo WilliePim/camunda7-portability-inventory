@@ -1,45 +1,14 @@
-# Draft issue 02
+# Embedded completeTaskByError for user tasks ignores errorMessage and payload
 
-**Proposed title:** Embedded `C7UserTaskCompletionApiImpl.completeTaskByError` ignores error message and payload
+### Describe the bug
 
-**Repository:** `bpm-crafters/process-engine-adapters-camunda-7`
-**Verified against:** commit `d2be36eca2edf24d1e1a43540cee77d9e9dffd21` (upstream `HEAD` on 2026-09-17)
-**Affected module:** `engine-adapter/c7-embedded-core`
-**Affected class:** `dev.bpmcrafters.processengineapi.adapter.c7.embedded.task.completion.C7UserTaskCompletionApiImpl`, method `completeTaskByError`
-- `engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/task/completion/C7UserTaskCompletionApiImpl.kt:44-59`
+In `c7-embedded-core`, `C7UserTaskCompletionApiImpl.completeTaskByError` passes only the task id and the error code to the engine ([C7UserTaskCompletionApiImpl.kt#L47-L50](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/task/completion/C7UserTaskCompletionApiImpl.kt#L47-L50)). The `errorMessage` and the payload of `CompleteTaskByErrorCmd` are never used. A user task handler that completes a task with a BPMN error therefore loses its error message and variables with the embedded adapter, but keeps them with the remote adapter.
 
-## Expected behaviour
+### To Reproduce
 
-`CompleteTaskByErrorCmd` carries an optional `errorMessage` and a payload supplier (`process-engine-api`, `api/src/main/kotlin/dev/bpmcrafters/processengineapi/task/CompleteTaskByErrorCmd.kt:10-27`). When a user task is completed by BPMN error, both should reach the engine together with the error code.
-
-Two other places in the adapter pass all three:
-- the embedded external-task implementation: `externalTaskService.handleBpmnError(cmd.taskId, workerId, cmd.errorCode, cmd.errorMessage, cmd.get())` (`engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/task/completion/C7ServiceTaskCompletionApiImpl.kt:47-53`);
-- the remote user-task implementation, which sets `errorCode`, `errorMessage` and `variables` on `TaskBpmnErrorDto` (`engine-adapter/c7-remote-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/task/completion/UserTaskCompletionApiImpl.kt:47-54`).
-
-## Actual behaviour
-
-Only the task id and error code are passed:
+Use a process with a user task that has an error boundary event for the error code `REJECTED`, followed by a second user task.
 
 ```kotlin
-taskService.handleBpmnError(
-  cmd.taskId,
-  cmd.errorCode
-)                                   // C7UserTaskCompletionApiImpl.kt:47-50
-```
-
-`cmd.errorMessage` is not read, and the payload supplier (`cmd.get()`) is never called, so none of the payload variables are set by this call. No test in the adapter repository calls `completeTaskByError`.
-
-## Reproduction sketch
-
-Spring Boot application with the Camunda 7 embedded adapter:
-- `userTaskCompletionApi` is the injected `dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi`;
-- `taskService` is `org.camunda.bpm.engine.TaskService` of the same engine.
-
-The process has a user task with an error boundary event for code `REJECTED`, followed by a second user task.
-
-```kotlin
-import dev.bpmcrafters.processengineapi.task.CompleteTaskByErrorCmd
-
 userTaskCompletionApi.completeTaskByError(
   CompleteTaskByErrorCmd(
     taskId = taskId,
@@ -50,13 +19,23 @@ userTaskCompletionApi.completeTaskByError(
 ).get()
 
 val next = taskService.createTaskQuery().processInstanceId(processInstanceId).singleResult()
-taskService.getVariables(next.id)
-// expected: contains "rejectionReason" -> "missing signature"
-// actual:   "rejectionReason" was not set by the error call
+taskService.getVariables(next.id) // rejectionReason was not set by the call above
 ```
 
-The same call through the remote adapter sends `errorMessage` and the variables.
+### Expected behavior
 
-## Impact
+The error message and the payload are passed to the engine together with the error code, as in the embedded external task implementation ([C7ServiceTaskCompletionApiImpl.kt#L47-L53](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/task/completion/C7ServiceTaskCompletionApiImpl.kt#L47-L53)) and the remote user task implementation ([UserTaskCompletionApiImpl.kt#L47-L54](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/engine-adapter/c7-remote-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/task/completion/UserTaskCompletionApiImpl.kt#L47-L54)).
 
-User-task handlers that complete a task by BPMN error lose the error message and all payload variables with the embedded adapter, while the same call keeps them with the remote adapter and for external tasks.
+### Actual behavior
+
+The adapter calls `taskService.handleBpmnError(cmd.taskId, cmd.errorCode)`. It never reads `cmd.errorMessage` and never calls the payload supplier (`cmd.get()`).
+
+### Environment
+
+- process-engine-adapters-camunda-7: commit `d2be36e`, the latest on `develop` as of 2026-09-17
+- Module: `c7-embedded-core`
+- process-engine-api: 1.7 (the version set in the adapter's `pom.xml`)
+
+### Additional context
+
+`CompleteTaskByErrorCmd` defines both fields ([CompleteTaskByErrorCmd.kt#L10-L27](https://github.com/bpm-crafters/process-engine-api/blob/b02569855596de4fb423dc181489e72595235503/api/src/main/kotlin/dev/bpmcrafters/processengineapi/task/CompleteTaskByErrorCmd.kt#L10-L27)). No test in the adapter repository calls `completeTaskByError`.
