@@ -287,7 +287,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
    - 3 `Context.getProcessEngineConfiguration()`
    - 2 `Context.getCommandContext()`
 
-   The wording is not amended. The draft's 59 is closest to the 57 `DelegateExecution` sites; its exact rule is not reproducible.
+   The wording has since been amended to name all four entry points with their site counts. The draft's 59 is closest to the 57 `DelegateExecution` sites; its exact rule is not reproducible.
 10. **Per-method breakdown.** Corrected to the "via entry point" counts in the consulting repository:
     - `startProcessInstanceByKey` 3 → 4
     - `taskService.complete` 4 → 5
