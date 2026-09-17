@@ -98,6 +98,7 @@ Engine implementation classes (`TaskServiceImpl`, …) count as their service in
 | 2G | impl.pvm imports (consulting) | consulting | 62 | 63 | +1 |  | 63 | `inventory.py 2G.pkg.pvm` |
 | 2G | impl.history imports (consulting) | consulting | 50 | 51 | +1 |  | 51 | `inventory.py 2G.pkg.history` |
 | 2G | impl.interceptor imports (consulting) | consulting | 46 | 46 | +0 |  | 46 | `inventory.py 2G.pkg.interceptor` |
+| 2G | impl.util imports (consulting) | consulting | — | 33 |  |  | 33 | `inventory.py 2G.pkg.util` |
 | 2G | impl.context imports (consulting) | consulting | 28 | 28 | +0 |  | 28 | `inventory.py 2G.pkg.context` |
 | 2G | impl.jobexecutor imports (consulting) | consulting | 21 | 21 | +0 |  | 21 | `inventory.py 2G.pkg.jobexecutor` |
 | 2G | ProcessEnginePlugin / AbstractProcessEnginePlugin | both | 42 | 49 | +7 | 6 | 43 | `inventory.py 2G.plugin` |
@@ -310,7 +311,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
     - a hand-written `DelegateExecution` implementation.
 
     None is a call on `RuntimeService` or `DelegateExecution`.
-15. **§2G "Top packages".** The list omits `impl.util`, which has 33 imports in the consulting repository and ranks 7th, ahead of `impl.context` (28) and `impl.jobexecutor` (21). Not amended. `Context.getCommandContext()` / `getProcessEngineConfiguration()` 4 → 44: the draft's 4 is not reproducible (calls inside delegate scopes only: 5).
+15. **§2G "Top packages".** The list omits `impl.util`, which has 33 imports in the consulting repository and ranks 7th, ahead of `impl.context` (28) and `impl.jobexecutor` (21). Amended: `impl.util` 33 added to the list (`inventory.py 2G.pkg.util`; ranking from `inventory.py --explain 2G.imports`). `Context.getCommandContext()` / `getProcessEngineConfiguration()` 4 → 44: the draft's 4 is not reproducible (calls inside delegate scopes only: 5).
 16. **§2H `caseService.*` ≈ 45 → 31.** Grep for `caseService.` finds 0 sites in the consulting repository; all 31 are `getCaseService().…` chains.
 17. **§2I draft sum.** The §2I reads summed to 803, while §3 reported "~700". The measured sum is 807.
 18. **§2L.**

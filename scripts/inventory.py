@@ -3,6 +3,7 @@
     python scripts/inventory.py                   # markdown table on stdout
     python scripts/inventory.py --json out/inventory.json
     python scripts/inventory.py --explain 1.start.chained   # list counted and rejected sites
+    python scripts/inventory.py --explain 2G.imports        # impl.* imports ranked by package
 
 Each row is a spec below. Call-site specs count `method_invocation` nodes whose
 receiver type resolves (see javaindex.py) to one of the listed Camunda types:
@@ -19,6 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -219,7 +221,7 @@ SPECS: list[Spec] = [
     *[
         Spec(f"2G.pkg.{p}", "2G", f"impl.{p} imports (consulting)", r, Imports(E + "impl.", f"package:{p}"), "consulting")
         for p, r in [("cfg", "121"), ("persistence", "65"), ("bpmn", "63"), ("pvm", "62"), ("history", "50"),
-                     ("interceptor", "46"), ("context", "28"), ("jobexecutor", "21")]
+                     ("interceptor", "46"), ("util", "—"), ("context", "28"), ("jobexecutor", "21")]
     ],
     Spec("2G.plugin", "2G", "ProcessEnginePlugin / AbstractProcessEnginePlugin", "42",
          Classes({E + "impl.cfg.ProcessEnginePlugin", E + "impl.cfg.AbstractProcessEnginePlugin"})),
@@ -322,13 +324,21 @@ def measure(spec: Spec, ix: CorpusIndex, scopes: DelegateScopes, delegate_summar
     if isinstance(how, Imports):
         n = 0
         files = 0
+        per_package: Counter = Counter()
         for f in ix.files:
             hits = [i for i in f.import_fqns if i.startswith(how.prefix)]
+            for i in hits:
+                rest = i[len(how.prefix):].split(".")
+                per_package[rest[0] if len(rest) >= 2 else "(types directly in the package)"] += 1
             if how.measure.startswith("package:"):
                 seg = how.measure.split(":", 1)[1]
                 hits = [i for i in hits if len(i[len(how.prefix):].split(".")) >= 2 and i[len(how.prefix):].split(".")[0] == seg]
             n += len(hits)
             files += bool(hits)
+        if how.measure == "declarations":
+            # ranked, zero-padded so the sorted explain output keeps the ranking
+            for rank, (pkg, count) in enumerate(per_package.most_common(), 1):
+                emit(f"{rank:03d}. {pkg}: {count}")
         return (files if how.measure == "files" else n), None
     if isinstance(how, Throws):
         n = 0
@@ -411,7 +421,7 @@ def main() -> None:
             log: list[str] = []
             value, _ = measure(spec, indexes[c.name], delegate_results[c.name]["scopes"], delegate_summary[c.name], calls[c.name], log)
             print(f"\n## {c.name}: {value}")
-            listable = isinstance(spec.how, (Calls, Classes, Throws))
+            listable = isinstance(spec.how, (Calls, Classes, Throws)) or getattr(spec.how, "measure", "") == "declarations"
             print("\n".join(sorted(log)) if log else "(no sites)" if listable else "(no per-site listing for this spec kind)")
         return
 

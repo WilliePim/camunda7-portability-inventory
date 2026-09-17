@@ -101,7 +101,7 @@ Starting at an element is expressible (`StartProcessByDefinitionAtElementCmd`, `
 
 ### G. Engine internals (`org.camunda.bpm.engine.impl.*`)
 
-- **617 imports across 176 files** (consulting) + 81 (examples). Top packages: `impl.cfg` 122, `impl.persistence` 66, `impl.bpmn` 65, `impl.pvm` 63, `impl.history` 51, `impl.interceptor` 46, `impl.context` 28, `impl.jobexecutor` 21.
+- **617 imports across 176 files** (consulting) + 81 (examples). Top packages: `impl.cfg` 122, `impl.persistence` 66, `impl.bpmn` 65, `impl.pvm` 63, `impl.history` 51, `impl.interceptor` 46, `impl.util` 33, `impl.context` 28, `impl.jobexecutor` 21.
 - Concrete shapes: `ProcessEnginePlugin` / `AbstractProcessEnginePlugin` (49), `BpmnParseListener` / `AbstractBpmnParseListener` (18), custom `ActivityBehavior` (5), `CommandInterceptor` (4), `Command<T>` (3), `SessionFactory` (2), `TenantIdProvider` (4), `Context.getCommandContext()` / `Context.getProcessEngineConfiguration()` (44).
 - Unportable by definition. Not an API concern, but a C7-exit assessment must count them: each one is a design decision, not a rewrite.
 
