@@ -320,7 +320,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 ### Section 3
 
 19. **"Sites (both repos)" held consulting-only values.** The rows "231 classes, 59 nested engine calls" and "615 imports / 176 files" were consulting-only. Corrected to both-repository values: 257 classes, 73 entry-point sites, 698 imports, 201 files. The consulting-only values remain in §2A and §2G.
-20. **Verdicts contradicted by §E and §I, not amended (outside E/I/J):**
+20. **Verdicts contradicted by §E and §I (since amended in §3):**
     - "`EXECUTION_ID` may cover part": the adapter rejects `EXECUTION_ID` for message correlation and honours it only for signals and task subscriptions.
     - "meta keys undocumented": the adapter docs contain meta-key tables.
 

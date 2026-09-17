@@ -225,11 +225,11 @@ Ask: document three points:
 | Queries (task, history, runtime, repository, job) | 160 | no | fewer sites than identity / authorization / filters; needs a stance |
 | History infrastructure | 14 classes | no | engine-native; document |
 | Identity / authorization / filters | 317 | no | out of scope; document |
-| Instance lifecycle, instance variables | 34 | partial | `EXECUTION_ID` may cover part; document |
+| Instance lifecycle, instance variables | 34 | partial | `EXECUTION_ID` is rejected for message correlation, honoured for signals and task subscriptions (§E); document |
 | Jobs / incidents / retries (ops) | 16 | partial | `FailTaskCmd` only |
 | Engine internals (`impl.*`) | 698 imports / 201 files | no | design work, not porting |
 | CMMN | 41 | no | dead end; state it |
-| Delegate context reads | 807 | partial | meta keys undocumented |
+| Delegate context reads | 807 | partial | per-adapter meta-key tables exist but mark no key as guaranteed and omit `processInstanceId`, `businessKey`, `formKey`, `retries`, `processDefinitionVersionTag` (remote only), `reason` (§I) |
 | Variable scope / typed values | 21 | partial | document adapter behaviour |
 
 ## 4. Patterns from banking codebases (anonymised, from experience — not from the two repos above)
