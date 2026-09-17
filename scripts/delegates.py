@@ -1,4 +1,4 @@
-"""Task 2: delegates and listeners, and engine calls made from inside them.
+"""Delegates and listeners, and engine calls made from inside them.
 
     python scripts/delegates.py            # markdown report on stdout
     python scripts/delegates.py --sites    # also list every entry-point call site

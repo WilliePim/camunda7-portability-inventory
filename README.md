@@ -17,9 +17,9 @@ Requirements: git and Python (tested with 3.13).
 python -m pip install -r scripts/requirements.txt   # tree-sitter, tree-sitter-java
 
 python scripts/clone.py                          # shallow clones at the pinned commits into external/
-python scripts/inventory.py                      # Task 1: every count in report.md, reported vs measured
-python scripts/delegates.py                      # Task 2: delegate/listener classes and engine calls made from inside them
-python scripts/adapter_facts.py --check-report   # Task 3: adapter meta keys, payload mapping, EXECUTION_ID; checks report.md citations
+python scripts/inventory.py                      # every count in report.md, reported vs measured
+python scripts/delegates.py                      # delegate/listener classes and engine calls made from inside them
+python scripts/adapter_facts.py --check-report   # adapter meta keys, payload mapping, EXECUTION_ID; checks report.md citations
 ```
 
 Options:

@@ -1,4 +1,4 @@
-"""Task 3: what the Camunda 7 adapter writes into meta, does with payloads, and
+"""What the Camunda 7 adapter writes into meta, does with payloads, and
 does with CommonRestrictions.EXECUTION_ID, pinned to file:line.
 
     python scripts/adapter_facts.py

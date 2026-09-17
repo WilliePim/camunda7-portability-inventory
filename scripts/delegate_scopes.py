@@ -1,6 +1,6 @@
 """Delegate/listener scopes and engine calls made from inside them.
 
-Library shared by inventory.py (Task 1, section 2A rows) and delegates.py (Task 2).
+Shared by inventory.py (section 2A rows) and delegates.py.
 
 Definitions
 * delegate/listener class: a named, non-abstract class that implements
