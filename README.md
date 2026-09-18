@@ -11,6 +11,28 @@ This repository verifies and hosts a static inventory of how open-source Camunda
 | `scripts/` | Everything used to produce the numbers and citations. Runnable from the repository root. |
 | `external/` | Clones of the analysed repositories (git-ignored, created by `scripts/clone.py`). |
 
+## Running the reproducer
+
+The three bugs in `issues/` are reproduced by the Maven project in `reproducer/`. You need git, a JDK 21 and network access to Maven Central. Maven itself is not needed: the wrapper downloads Maven 3.9.12 on the first run.
+
+```sh
+git clone https://github.com/WilliePim/camunda7-portability-inventory.git camunda7-portability-inventory
+cd camunda7-portability-inventory/reproducer
+export JAVA_HOME="$HOME/.jdks/jdk-21.0.12.1+1"   # the Temurin 21 of the recorded run; use the path of your JDK 21
+./mvnw test
+```
+
+Maven runs on the JDK in `JAVA_HOME` and falls back to the first `java` on the `PATH` only when `JAVA_HOME` is unset, which can be a different JDK; set it explicitly. On macOS: `export JAVA_HOME=$(/usr/libexec/java_home -v 21)`. In PowerShell: `$env:JAVA_HOME = "$HOME\.jdks\jdk-21.0.12.1+1"`, then `.\mvnw.cmd test`.
+
+Expected result: `Tests run: 9, Failures: 3, Errors: 2` and `BUILD FAILURE`. The build fails on purpose. The five bug tests assert the behaviour the API describes, so they fail while the bugs exist; the four `observed_*` tests record what the adapter and the engine do, and pass. Full output, with stack traces, is in `target/surefire-reports/`; the result of each test is in [reproducer/README.md](reproducer/README.md).
+
+| Component | Version |
+|---|---|
+| `process-engine-adapter-camunda-platform-c7-embedded-core` | 2026.09.1, the latest release |
+| `process-engine-api`, `process-engine-api-impl` | 1.7 |
+| `camunda-engine` | 7.24.0, on H2 2.3.232 in memory |
+| JDK | Java 21, which Camunda 7.24 [lists as supported](https://docs.camunda.org/manual/7.24/introduction/supported-environments/#java); recorded run on Eclipse Temurin 21.0.12.1+1 |
+
 ## Running from a clean checkout
 
 You need git, Python 3 (tested with 3.13) and network access to github.com. The commands are for a POSIX shell; Git Bash works on Windows. PowerShell differences are noted below the block.
