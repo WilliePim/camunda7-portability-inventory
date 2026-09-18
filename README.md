@@ -107,10 +107,12 @@ Main sources are `.java` files under `src/main/`. Test sources and build helpers
 
 ## Known limitations
 
-- **Static analysis only.** Nothing is compiled or executed.
+The limits below apply to the inventory: the scripts in `scripts/`, `report.md` and `verification.md`. They do not apply to the three adapter bugs in `issues/`, which the reproducer observes at runtime against the released adapter instead of inferring them from source.
+
+- **Static analysis only.** The inventory scripts parse the analysed sources; nothing in them is compiled or executed.
   - Call receivers are typed from declarations, imports and known Camunda getter chains, without a classpath.
   - A receiver the index cannot resolve is not counted, so counts err low.
-  - Adapter behaviour is read from source, not observed at runtime.
+  - The adapter behaviour described in the report's sections is read from source, not observed at runtime. The three bugs are the exception: each one is shown by a failing test in `reproducer/`.
 - **Java only.** Not analysed: BPMN/DMN/CMMN XML (e.g. `camunda:delegateExpression` bindings), scripts embedded in models, and non-Java sources. Neither corpus contains Kotlin.
 - **Snippet repositories, not applications.**
   - Both corpora are samples and consulting snippets: many small projects, some near-duplicates, some generated code (e.g. an OpenAPI client).
