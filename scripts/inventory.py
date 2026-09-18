@@ -277,7 +277,7 @@ SPECS: list[Spec] = [
     Spec("3.queries", "3", "Queries", "~135",
          Sum(["2B.taskQuery.direct", "2B.taskQuery.chained", "2B.historyQuery", "2B.runtimeQuery", "2B.repositoryQuery", "2B.jobQuery"])),
     Spec("3.historyInfra", "3", "History infrastructure (classes)", "~12",
-         Sum(["2C.historyEventHandler", "2C.dbHistoryEventHandler", "2C.historyLevel", "2C.historyEventProducer", "2C.dynamicRemovalTime"])),
+         Sum(["2C.historyEventHandler", "2C.dbHistoryEventHandler", "2C.historyLevel", "2C.historyEventProducer"])),
     Spec("3.identity", "3", "Identity / authorization / filters", "~280", Sum(["2D.identity", "2D.authorization", "2D.filter"])),
     Spec("3.lifecycle", "3", "Instance lifecycle, instance variables", "~30",
          Sum(["2E.variables", "2E.signal", "2E.messageEventReceived", "2E.deleteProcessInstance", "2E.suspendActivate",

@@ -62,7 +62,7 @@ Ask: either a minimal read-only `TaskQueryApi` / `ProcessInstanceQueryApi` (by b
 
 ### C. History and audit
 
-- 38 history query sites (above) plus **custom history infrastructure**, in classes: `HistoryEventHandler` (4), `DbHistoryEventHandler` subclasses (2), custom `HistoryLevel` (4), `HistoryEventProducer` (2), `DynamicRemovalTimeCalculationStrategy` (2).
+- 38 history query sites (above) plus **custom history infrastructure**, in classes: `HistoryEventHandler` (4), `DbHistoryEventHandler` subclasses (2), custom `HistoryLevel` (4), `HistoryEventProducer` (2).
 - Nothing in the API touches history. In regulated environments (banking) history is a compliance artefact, not a nice-to-have; C8's history model is also different.
 
 Ask: document that history is engine-native and that audit requirements must be met by the application (event sourcing / outbox from workers), not by the API.
@@ -223,7 +223,7 @@ Ask: document three points:
 | Deployment, DMN evaluate | 16 | yes | ports |
 | Delegates & listeners in shared transaction | 257 classes, 73 nested engine calls | no | rewrite as workers; semantics change |
 | Queries (task, history, runtime, repository, job) | 160 | no | fewer sites than identity / authorization / filters; needs a stance |
-| History infrastructure | 14 classes | no | engine-native; document |
+| History infrastructure | 12 classes | no | engine-native; document |
 | Identity / authorization / filters | 317 | no | out of scope; document |
 | Instance lifecycle, instance variables | 34 | partial | `EXECUTION_ID` is rejected for message correlation, honoured for signals and task subscriptions (§E); document |
 | Jobs / incidents / retries (ops) | 16 | partial | `FailTaskCmd` only |
