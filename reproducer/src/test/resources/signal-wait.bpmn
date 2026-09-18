@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="signal-wait-definitions"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:signal id="mySignal" name="mySignal" />
+  <bpmn:process id="signal_wait" isExecutable="true" camunda:historyTimeToLive="P1D">
+    <bpmn:startEvent id="start" />
+    <bpmn:sequenceFlow id="to_wait" sourceRef="start" targetRef="wait_for_signal" />
+    <bpmn:intermediateCatchEvent id="wait_for_signal">
+      <bpmn:signalEventDefinition signalRef="mySignal" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="to_after_signal" sourceRef="wait_for_signal" targetRef="after_signal" />
+    <bpmn:userTask id="after_signal" name="Signal received" />
+    <bpmn:sequenceFlow id="to_end" sourceRef="after_signal" targetRef="end" />
+    <bpmn:endEvent id="end" />
+  </bpmn:process>
+</bpmn:definitions>
