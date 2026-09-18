@@ -330,7 +330,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 
 ### Sections E, I, J (amended)
 
-21. **§E "execution-targeted correlation may be expressible".** Wrong for the C7 adapter: `EXECUTION_ID` is not a supported correlation restriction and is rejected with `IllegalArgumentException`. Corrected in §E.
+21. **§E "execution-targeted correlation may be expressible".** Wrong for the C7 adapter: `EXECUTION_ID` is not a supported correlation restriction and is rejected with `IllegalArgumentException`. Corrected in §E. Of the 6 `messageEventReceived(name, executionId)` sites, 1 finds its execution through a process variable and can be expressed as a correlation on that variable with `useGlobalCorrelationKey` (`one-time-examples/oop2013-cookshow/.../SupplierAdapter.java:43-47`). The other 5 cannot: 3 target a process instance by id (`snippets/subtask-hierarchy/.../CamundaBpmProcessApplication.java:39`, `:44`, `.../InfoRestService.java:40`) and 2 by business key and activity (`snippets/asynchronous-messaging-jms/.../CallbackService.java:80`, `:99`). The §2E table and the §E text both state this.
 22. **§I "could not find … a guaranteed list of meta keys" and "process definition id (versioned) … not named anywhere".**
     - The API module has no list, but the adapter docs have per-adapter tables.
     - `CommonRestrictions.PROCESS_DEFINITION_ID` exists, and every adapter flavour writes `processDefinitionId`.

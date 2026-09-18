@@ -250,6 +250,11 @@ OTHER = [
       cite("E:process/StartProcessApiImpl.kt:87", ".startBeforeActivity(cmd.elementId)")]),
     ("start at element, remote: start instructions sent with the start request",
      [cite("R:process/StartProcessApiImpl.kt:95", "startProcessInstanceDto.startInstructions(listOf(startInstructionDto))")]),
+    ("Correlation.withVariable names the correlation variable",
+     [cite("API:correlation/Correlation.kt:34", "fun withVariable(variable: String): Correlation")]),
+    ("correlation with useGlobalCorrelationKey matches a process-instance variable",
+     [cite("E:correlation/CorrelationApiImpl.kt:49", "it.processInstanceVariableEquals(correlation.correlationVariable, correlation.correlationKey)"),
+      cite("R:correlation/CorrelationApiImpl.kt:51", "it.correlationKeys(correlationKeys)")]),
     ("AdapterDataConverter is used for decision results",
      [cite("E:decision/DelegatingDmnDecisionEvaluationOutput.kt:11", "private val dataConverter: AdapterDataConverter")]),
 ]
