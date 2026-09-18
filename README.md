@@ -94,3 +94,7 @@ Main sources are `.java` files under `src/main/`. Test sources and build helpers
 - **No customer code.** Only the four public repositories above are analysed.
 - **Remote adapter serialization** depends on `io.holunda.c7:c7-rest-client-variables`, which is not cloned. Its rules are not verified here.
 - **Windows.** Some snippet paths exceed 260 characters. `clone.py` sets `core.longpaths=true` in each clone for git, and Python needs Windows long-path support enabled (the `LongPathsEnabled` registry setting) to read those files.
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).
