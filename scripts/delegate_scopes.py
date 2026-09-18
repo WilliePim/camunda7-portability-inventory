@@ -169,6 +169,7 @@ def summarise(results: dict[str, dict]) -> dict[str, dict[str, int]]:
         row = {
             "classes": len(named),
             "classes_direct": sum(1 for k, u in s.units.items() if u.kind == "class" and k in s.direct),
+            "classes_multi": sum(1 for u in named if len(u.interfaces) > 1),
             "abstract": sum(1 for u in s.units.values() if u.kind == "abstract"),
             "anonymous": sum(1 for u in s.units.values() if u.kind == "anonymous"),
             "lambda": sum(1 for u in s.units.values() if u.kind == "lambda"),

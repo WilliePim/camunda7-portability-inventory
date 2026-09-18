@@ -39,7 +39,7 @@ The external-task style of C7 (`ExternalTaskHandler`, `complete`, `handleFailure
 
 ### A. Business logic inside the engine transaction (`JavaDelegate`, `ExecutionListener`, `TaskListener`)
 
-- **231 delegate/listener classes** (185 `JavaDelegate`, 25 `ExecutionListener`, 22 `TaskListener`) in the consulting repo, 24 + 2 classes in the examples.
+- **231 delegate/listener classes** (185 `JavaDelegate`, 25 `ExecutionListener`, 22 `TaskListener`) in the consulting repo, 24 + 2 classes in the examples. One consulting class implements both `JavaDelegate` and `ExecutionListener`, so the three per-interface figures add up to 232 for 231 classes.
 - The API has no in-transaction hook: work is done by a subscriber *outside* the engine transaction and completed via a future.
 - **47 of the 231 delegate/listener classes call engine services from inside the delegate** through four entry points (72 sites total): `DelegateExecution.getProcessEngineServices()` (57), `DelegateTask.getProcessEngineServices()` (10), `Context.getProcessEngineConfiguration()` (3), `Context.getCommandContext()` (2). Engine calls reached through them include `startProcessInstanceByKey` (4), `correlateMessage` (2), `taskService.complete` (5), `taskService.createTaskQuery` (4), `historyService.create*Query` (13), `repositoryService.*` (9), `identityService.*` (17), `caseService.*` (4).
 - Some of these calls exist in the API (start, correlate) but the **semantics change**: in C7 they run in the same transaction as the calling delegate (atomic, rolled back together); in the API they are independent async commands. This is the pattern that decides the effort of a migration, and it is invisible to BPMN-level analysers.

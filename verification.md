@@ -171,6 +171,7 @@ All numeric corrections in `report.md` use the Measured column. Where the report
 | … implementing JavaDelegate | 24 | 185 | 209 |
 | … implementing ExecutionListener | 1 | 25 | 26 |
 | … implementing TaskListener | 1 | 22 | 23 |
+| … implementing more than one of them | 0 | 1 | 1 |
 | … of which implement an interface directly | 26 | 231 | 257 |
 | abstract classes implementing one (not in headline) | 0 | 1 | 1 |
 | anonymous classes (not in headline) | 0 | 0 | 0 |
@@ -283,7 +284,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 
 ### Section 2A (headline)
 
-8. **"184 `JavaDelegate`" → 185.** The additional class is `DelegationCodeTestProxy` (see item 1). It implements both `JavaDelegate` and `ExecutionListener`, so the per-interface counts (185 + 25 + 22 = 232) exceed the 231 distinct classes.
+8. **"184 `JavaDelegate`" → 185.** The additional class is `DelegationCodeTestProxy` (see item 1). It implements both `JavaDelegate` and `ExecutionListener`, so the per-interface counts (185 + 25 + 22 = 232) exceed the 231 distinct classes. Amended: §2A now states this overlap (`delegates.py` row "… implementing more than one of them": 1).
 9. **"44 of the 231 delegate files … via `execution.getProcessEngineServices()` (59 sites total)" → 47 / 72.** The corrected numbers count all four entry points (§2). The sentence names only one entry point; the 72 consulting sites split into:
    - 57 `DelegateExecution.getProcessEngineServices()`
    - 10 `DelegateTask.getProcessEngineServices()`
