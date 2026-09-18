@@ -9,18 +9,51 @@ This repository verifies and hosts a static inventory of how open-source Camunda
 | `scripts/` | Everything used to produce the numbers and citations. Runnable from the repository root. |
 | `external/` | Clones of the analysed repositories (git-ignored, created by `scripts/clone.py`). |
 
-## Re-running
+## Running from a clean checkout
 
-Requirements: git and Python (tested with 3.13).
+You need git, Python 3 (tested with 3.13) and network access to github.com. The commands are for a POSIX shell; Git Bash works on Windows. PowerShell differences are noted below the block.
 
 ```sh
-python -m pip install -r scripts/requirements.txt   # tree-sitter, tree-sitter-java
+# 1. Get this repository
+git clone <url-or-path-of-this-repository> portability-inventory
+cd portability-inventory
 
-python scripts/clone.py                          # shallow clones at the pinned commits into external/
-python scripts/inventory.py                      # every count in report.md, reported vs measured
-python scripts/delegates.py                      # delegate/listener classes and engine calls made from inside them
-python scripts/adapter_facts.py --check-report   # adapter meta keys, payload mapping, EXECUTION_ID; checks report.md citations
+# 2. Python environment with the parser packages (tree-sitter, tree-sitter-java)
+python -m venv .venv
+source .venv/bin/activate        # Git Bash on Windows: source .venv/Scripts/activate
+python -m pip install -r scripts/requirements.txt
+
+# 3. Fetch the four analysed repositories at the pinned commits
+python scripts/clone.py
+
+# 4. Produce the results
+mkdir -p out
+python scripts/inventory.py --json out/inventory.json > out/inventory.md
+python scripts/delegates.py --sites > out/delegates.md
+python scripts/adapter_facts.py --check-report > out/adapter_facts.md
 ```
+
+In PowerShell, activate the environment with `.venv\Scripts\Activate.ps1`, and create the folder with `mkdir out`. Windows PowerShell 5.1 writes UTF-16 files with `>`, so either pipe to `Out-File -Encoding utf8 out/inventory.md` or run step 4 in Git Bash.
+
+All scripts are run from the repository root. They print Markdown to standard output. The redirects above only keep a copy in `out/`, which is git-ignored.
+
+### What each step produces
+
+| Step | Files written | Printed |
+|---|---|---|
+| `pip install` | `.venv/` (git-ignored) | pip's install log |
+| `clone.py` | `external/<owner>__<name>/` for the four repositories: shallow, detached at the commit pinned in `scripts/repos.py`, with `core.longpaths=true` | One line per repository with the checked-out commit. On a second run it prints `(already present)` and fetches nothing. |
+| `inventory.py` | With `--json PATH`: the same rows as JSON (the folder is created if needed) | One table row per count in `report.md` (126 rows): id, section, pattern, reported value, measured value, delta, value per repository, unresolved sites not counted, and the counting rule |
+| `delegates.py` | none | Three tables: delegate/listener implementations, engine access from inside delegates (entry points), distinct engine methods called from inside delegates. `--sites` adds the 73 entry-point call sites with file:line. |
+| `adapter_facts.py` | none | The Camunda 7 adapter's meta keys, payload handling and restriction handling, each with a file:line citation checked against the source. With `--check-report` it also checks the 64 adapter/API citations in `report.md`. |
+
+### Checking the result
+
+- No line printed by `clone.py` contains `differs from pinned commit`.
+- `adapter_facts.py` ends with `All citations verified.` and exits with status 0. If a cited line no longer contains the expected text, it lists the citation under `Citation check FAILED` and exits with status 1.
+- The Measured column of `out/inventory.md` is the column of the same name in `verification.md` section 1, which is where the numbers in `report.md` come from.
+- The three tables in `out/delegates.md` are the tables in `verification.md` section 2.
+- Headline values to spot-check: 231 delegate/listener classes in the consulting repository (257 in both), 47 of them calling the engine through 72 entry-point call sites (48 and 73 in both).
 
 Options:
 
@@ -60,4 +93,4 @@ Main sources are `.java` files under `src/main/`. Test sources and build helpers
   - Counts describe how often a shape appears in these repositories, not in production systems.
 - **No customer code.** Only the four public repositories above are analysed.
 - **Remote adapter serialization** depends on `io.holunda.c7:c7-rest-client-variables`, which is not cloned. Its rules are not verified here.
-- **Windows.** `clone.py` sets `core.longpaths=true` in each clone because some snippet paths exceed 260 characters.
+- **Windows.** Some snippet paths exceed 260 characters. `clone.py` sets `core.longpaths=true` in each clone for git, and Python needs Windows long-path support enabled (the `LongPathsEnabled` registry setting) to read those files.
