@@ -70,7 +70,7 @@ Ask: document that history is engine-native and that audit requirements must be 
 ### D. Identity, authorization, filters
 
 - `identityService.*` 151 sites, `authorizationService.*` 121, `filterService.*` 45, plus `ReadOnlyIdentityProvider`, LDAP/Keycloak identity plugins, `ProcessEngineAuthenticationFilter`.
-- Zero counterpart. Clearly by design, but it is the second-largest block of code in the consulting repo and is common in enterprise C7 apps (provisioning users/groups/tenants at startup, candidate group logic).
+- Zero counterpart. Clearly by design, but by call sites it is the second-largest area in the consulting repo (315 sites, after the 789 delegate context reads in §I; the engine internals in §G are counted in imports, not call sites) and is common in enterprise C7 apps (provisioning users/groups/tenants at startup, candidate group logic).
 
 ### E. Process instance lifecycle and variables outside tasks
 
