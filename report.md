@@ -1,18 +1,17 @@
 # Field report: two open-source Camunda 7 codebases held against process-engine-api — what maps, what doesn't
 
-**Type:** discussion / documentation input, not a bug
 **Goal:** give maintainers (and anyone planning a C7 exit) a concrete, counted list of C7 usage patterns that have no expression in the API, so the "portable vs. not portable" line can be documented and effort estimated.
 
 ## Method
 
-Static inventory of main sources (tests excluded) in two public C7 codebases, held against `process-engine-api` `api` module (HEAD, September 2026). The Java sources are parsed with tree-sitter, and a call is counted only when its receiver resolves to the Camunda type in question through declarations and imports; comments are ignored. Plain grep over the same sources reproduces the old, uncorrected numbers instead: it counts commented-out code and misses calls split across lines. For example, 35 of its 56 hits for chained `startProcessInstanceBy(Key|Id)` calls are in comments, and the parse counts 27 such calls.
+Static inventory of main sources (tests excluded) in two public C7 codebases, held against `process-engine-api` `api` module at `b025698`. The Java sources are parsed with tree-sitter, and a call is counted only when its receiver resolves to the Camunda type in question through declarations and imports; comments are ignored. Plain grep over the same sources reproduces the old, uncorrected numbers instead: it counts commented-out code and misses calls split across lines. For example, 35 of its 56 hits for chained `startProcessInstanceBy(Key|Id)` calls are in comments, and the parse counts 27 such calls.
 
 | Codebase | Main `.java` files | Why |
 |---|---|---|
 | `camunda/camunda-bpm-examples` | 124 | Official samples, broad coverage of platform integration |
 | `camunda-consulting/code` (Camunda 7 content: 1,052 files under `snippets/`, 245 under `one-time-examples/`; the C8 folder `snippets/reverse-adapter/` excluded) | 1,297 | Real-world consulting patterns, closest public thing to enterprise code |
 
-Counts are **call sites** unless a unit is given: counts of classes, import declarations or files name that unit where they appear. All counts are occurrences, not distinct features, and the consulting repo over-represents identity/authorization and platform-plugin snippets. Treat numbers as "how often this shape shows up", not as a benchmark. No customer code is included; banking patterns in the last section are from personal experience, anonymised.
+Counts are **call sites** unless a unit is given: counts of classes, import declarations or files name that unit where they appear. All counts are occurrences, not distinct features, and the consulting repo over-represents identity/authorization and platform-plugin snippets. Treat numbers as "how often this shape shows up", not as a benchmark. No customer code is included.
 
 API surface used as reference: `DeploymentApi`, `EvaluateDecisionApi`, `StartProcessApi`, `CorrelationApi`, `SignalApi`, `TaskSubscriptionApi`, `ServiceTaskCompletionApi`, `UserTaskCompletionApi`, `UserTaskModificationApi`, `UserTaskSupport`, `CommonRestrictions`.
 
@@ -86,7 +85,7 @@ Ask: document that history is engine-native and that audit requirements must be 
 
 Adapter citations in §E, §I, §J and §M refer to `bpm-crafters/process-engine-adapters-camunda-7` at `d2be36e`: `emb:` = `engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/`, `rem:` = `engine-adapter/c7-remote-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/`, `docs:` = `docs/`; `api:` = `bpm-crafters/process-engine-api` at `b025698`, `api/src/main/kotlin/dev/bpmcrafters/processengineapi/`.
 
-`CommonRestrictions.EXECUTION_ID` exists, but the C7 adapter does not honour it for message correlation. Both `CorrelationApiImpl` classes accept only `tenantId`, `withoutTenantId` and `useGlobalCorrelationKey` (emb: `correlation/CorrelationApiImpl.kt:59-63`, rem: `correlation/CorrelationApiImpl.kt:63-67`); any other key fails `ensureSupported` with `IllegalArgumentException` (api: `RestrictionAware.kt:27-28`). Addressing an execution by id therefore has no path through `CorrelationApi`. Of the 6 `messageEventReceived(name, executionId)` sites, 1 finds its execution through a process variable. It can be expressed as a correlation on that variable (`Correlation.withKey(value).withVariable(name)`, api: `correlation/Correlation.kt:34-36`) with `useGlobalCorrelationKey`, which makes the adapter match a process-instance variable (emb: `correlation/CorrelationApiImpl.kt:48-49`, rem: `correlation/CorrelationApiImpl.kt:50-51`). The other 5 address the execution or process instance by id (3) or by business key and activity (2), which the adapter does not accept.
+`CommonRestrictions.EXECUTION_ID` exists, but the C7 adapter does not honour it for message correlation. Both `CorrelationApiImpl` classes accept only `tenantId`, `withoutTenantId` and `useGlobalCorrelationKey` (emb: `correlation/CorrelationApiImpl.kt:59-63`, rem: `correlation/CorrelationApiImpl.kt:63-67`); any other key fails `ensureSupported` with `IllegalArgumentException` (api: `RestrictionAware.kt:27-28`). Addressing an execution by id therefore has no path through `CorrelationApi`. Of the 6 `messageEventReceived(name, executionId)` sites, 1 finds its execution through a process variable (classified by hand, site by site; each site is listed in verification.md, item 21). It can be expressed as a correlation on that variable (`Correlation.withKey(value).withVariable(name)`, api: `correlation/Correlation.kt:34-36`) with `useGlobalCorrelationKey`, which makes the adapter match a process-instance variable (emb: `correlation/CorrelationApiImpl.kt:48-49`, rem: `correlation/CorrelationApiImpl.kt:50-51`). The other 5 address the execution or process instance by id (3) or by business key and activity (2), which the adapter does not accept.
 
 The adapter honours `EXECUTION_ID` for `SendSignalCmd` (emb: `correlation/SignalApiImpl.kt:61`, rem: `correlation/SignalApiImpl.kt:65`). That call is `createSignalEvent(name).executionId(id)` (emb: `correlation/SignalApiImpl.kt:28-32`): it delivers a signal event to one execution's signal subscription, not the wait-state trigger of `runtimeService.signal(executionId)` (4). The adapter also honours `EXECUTION_ID` when matching task subscriptions (emb: `task/delivery/pull/EmbeddedPullUserTaskDelivery.kt:206`, `task/delivery/pull/EmbeddedPullServiceTaskDelivery.kt:239`; rem: `task/delivery/pull/PullUserTaskDelivery.kt:219`, `task/delivery/pull/PullServiceTaskDelivery.kt:282`).
 
@@ -233,18 +232,28 @@ Ask: document three points:
 | Delegate context reads | 807 | partial | per-adapter meta-key tables exist but mark no key as guaranteed and omit `processInstanceId`, `businessKey`, `formKey`, `retries`, `processDefinitionVersionTag` (remote only), `reason` (§I) |
 | Local variables, removal, existence checks (`setVariableLocal`, `getVariableLocal`, `removeVariable`, `hasVariable`) | 21 | partial | document adapter behaviour (§J) |
 
-Note on instance lifecycle: 7 of the 34 sites have an API path. In `oop2013-cookshow/.../SupplierAdapter.java`, the `messageEventReceived` call (line 47) and the `setVariable` just before it (line 46) become one `CorrelateMessageCmd`, with the variable as payload (§E). Five calls are made for a known user task, and the task delivery covers them: `UserTaskSupport.getPayload(taskId)` returns the variables visible from the task (§J), and `UserTaskSupport.getTaskInformation(taskId)` carries the task's `activityId` in its meta (§I). These are `four-eyes-advanced/.../TaskListService.java:54` (`getActiveActivityIds` of the task's execution) and `:80`, and `user-task-data-cache/.../TaskDataConfiguration.java:83`, `:84` and `:86` (variable reads). The other 27 sites have no path.
+Note on instance lifecycle (classified by hand, site by site; see verification.md, item 20): 7 of the 34 sites have an API path. In `oop2013-cookshow/.../SupplierAdapter.java`, the `messageEventReceived` call (line 47) and the `setVariable` just before it (line 46) become one `CorrelateMessageCmd`, with the variable as payload (§E). Five calls are made for a known user task, and the task delivery covers them: `UserTaskSupport.getPayload(taskId)` returns the variables visible from the task (§J), and `UserTaskSupport.getTaskInformation(taskId)` carries the task's `activityId` in its meta (§I). These are `four-eyes-advanced/.../TaskListService.java:54` (`getActiveActivityIds` of the task's execution) and `:80`, and `user-task-data-cache/.../TaskDataConfiguration.java:83`, `:84` and `:86` (variable reads). The other 27 sites have no path.
 
-## 4. Patterns from banking codebases (anonymised, from experience — not from the two repos above)
+## 4. About this report
 
-<!-- SIMONE: fill this in. Keep it to shapes, no client names, no code. Suggested prompts: -->
-- Delegates that open their own JDBC/JPA transaction on a bank DB *and* rely on the engine transaction for rollback (dual-write with no outbox).
-- `TaskListener` on `create` that computes candidate groups from an external entitlements system (identity + shared transaction).
-- History queries used as the audit trail for regulators (activity instances + variable history joined by business key).
-- `runtimeService.signal(executionId)` used as a wait/resume mechanism for asynchronous host-system callbacks (mainframe batch replies).
-- `BpmnParseListener` injecting execution listeners on every service task for logging/metrics.
-- Variables pinned to JSON serialization for Cockpit and for cross-version compatibility during blue/green deployments.
-<!-- end -->
+I'm Simone, a Java/Spring engineer. For the past years I've worked on
+Camunda 7 running in production inside Italian banking systems — the
+embedded engine, custom delegates, engine plugins, and the shared
+transaction between process and business data. The corpus analyzed here
+is public example code, not my clients' codebases, for the obvious
+confidentiality reasons; but the patterns it contains are the same ones
+I see in production, which is why I trust the counts to say something
+useful about real estates.
+
+The report exists because the Camunda 7 end-of-life question is usually
+argued from opinions about architecture, and I wanted the other kind of
+input: a measurement of how existing code actually touches the engine,
+held against the surface this API offers. Every number is generated by
+the scripts in this repository and re-runs from scratch; where a
+classification needed human judgment instead of parsing, it is marked
+as such and listed site by site in verification.md. The asks in §5 are
+the documentation gaps that survived verification — several from the
+draft did not, because the adapter already covers them.
 
 ## 5. Concrete asks to maintainers
 
