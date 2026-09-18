@@ -84,7 +84,7 @@ Ask: document that history is engine-native and that audit requirements must be 
 | `createProcessInstanceModification` | 2 | |
 | `getActiveActivityIds` | 2 | |
 
-Adapter citations in §E, §I and §J refer to `bpm-crafters/process-engine-adapters-camunda-7` at `d2be36e`: `emb:` = `engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/`, `rem:` = `engine-adapter/c7-remote-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/`, `docs:` = `docs/`; `api:` = `bpm-crafters/process-engine-api` at `b025698`, `api/src/main/kotlin/dev/bpmcrafters/processengineapi/`.
+Adapter citations in §E, §I, §J and §M refer to `bpm-crafters/process-engine-adapters-camunda-7` at `d2be36e`: `emb:` = `engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/`, `rem:` = `engine-adapter/c7-remote-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/`, `docs:` = `docs/`; `api:` = `bpm-crafters/process-engine-api` at `b025698`, `api/src/main/kotlin/dev/bpmcrafters/processengineapi/`.
 
 `CommonRestrictions.EXECUTION_ID` exists, but the C7 adapter does not honour it for message correlation. Both `CorrelationApiImpl` classes accept only `tenantId`, `withoutTenantId` and `useGlobalCorrelationKey` (emb: `correlation/CorrelationApiImpl.kt:59-63`, rem: `correlation/CorrelationApiImpl.kt:63-67`); any other key fails `ensureSupported` with `IllegalArgumentException` (api: `RestrictionAware.kt:27-28`). `messageEventReceived(name, executionId)` (6) has no path through `CorrelationApi`.
 
@@ -211,7 +211,7 @@ Ask: document three points:
 
 ### M. Forms
 
-- `formService.getTaskFormData / getStartFormKey` (3). Not in the API; form keys may or may not appear in task meta.
+- `formService.getTaskFormData / getStartFormKey` (3). Not in the API. For user tasks, both adapters write the form key into task meta as `formKey` when the task has one (emb: `task/delivery/TaskInformationExtensions.kt:26`, rem: `task/delivery/TaskInformationExtensions.kt:45`); the adapter docs' meta-key tables do not list it (docs: `reference-c7-embedded.md:175-208`, `reference-c7-remote.md:210-243`). Form field data (`getTaskFormData`, 2 sites) and start form keys (`getStartFormKey`, 1 site) have no counterpart.
 
 ## 3. Summary table
 
