@@ -304,7 +304,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 
 11. **§2B "This is the largest surface with no counterpart" and §3 "largest gap".** Unsupported by the counts. Queries total 160 sites, while identity / authorization / filters total 317 and delegate context reads total 807. Amended: §2B and the §3 verdict now compare queries (160) with identity / authorization / filters (317).
 12. **§2C `DynamicRemovalTimeCalculationStrategy` (2).** This is not a Camunda type. It is an interface declared in the snippet (`com.camunda.bpm.demo.engine_plugin_variable_depending_history_ttl.strategy`), with 2 implementations. The Camunda extension point behind it is `HistoryRemovalTimeProvider`, implemented once. The count is correct for the local interface; not amended. Also: custom `HistoryLevel` 2 → 4 (2 in the examples repository).
-13. **§2D identity items.** The row lists `AuthenticationExtractor`, which resolves to `org.camunda.optimize.plugin.security.authentication.AuthenticationExtractor`: an Optimize plugin interface, not an engine or web-app type. Amended: removed from §D. "Second-largest block of code in the consulting repo" has no measure behind it; not amended. Counts corrected: `identityService.*` 151, `authorizationService.*` 121, `filterService.*` 45.
+13. **§2D identity items.** The row lists `AuthenticationExtractor`, which resolves to `org.camunda.optimize.plugin.security.authentication.AuthenticationExtractor`: an Optimize plugin interface, not an engine or web-app type. Amended: removed from §D. "Second-largest block of code in the consulting repo" had no measure behind it. Amended: §D now states the ranking by call sites in the consulting repository (identity / authorization / filters 315, after delegate context reads 789; `inventory.py` rows `3.identity` and `3.contextReads`). Counts corrected: `identityService.*` 151, `authorizationService.*` 121, `filterService.*` 45.
 14. **§2F `createIncident / resolveIncident` (9) → 0.** The grep hits are:
     - method declarations and `super.resolveIncident(...)` calls inside custom `IncidentHandler` classes;
     - a generated OpenAPI REST client (`snippets/camunda-openapi-client`);
@@ -338,8 +338,8 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 
 ### Sections 4–5 and M (not amended)
 
-24. **§5 ask 4 "execution-targeted correlation via `EXECUTION_ID` (supported?)".** Answer: not supported for message correlation, supported for signals (§E). Not amended.
-25. **§M "form keys may or may not appear in task meta".** `formKey` is written for user tasks by both adapters, conditional on a non-null value (`emb: task/delivery/TaskInformationExtensions.kt:26`, `rem: task/delivery/TaskInformationExtensions.kt:45`). Not amended.
+24. **§5 ask 4 "execution-targeted correlation via `EXECUTION_ID` (supported?)".** Answer: not supported for message correlation, supported for signals (§E). Amended: ask 4 now asks only for the CMMN and listener rows missing from the API README feature matrix and for a signal restriction table; ask 1 now asks only for the guaranteed / conditional marking and the six keys missing from the existing adapter meta-key tables.
+25. **§M "form keys may or may not appear in task meta".** `formKey` is written for user tasks by both adapters, conditional on a non-null value (`emb: task/delivery/TaskInformationExtensions.kt:26`, `rem: task/delivery/TaskInformationExtensions.kt:45`). Amended: §M now states this coverage, the missing `formKey` row in the adapter docs tables, and which form calls have no counterpart.
 
 ## 4. Gaps in report.md the adapter already covers
 

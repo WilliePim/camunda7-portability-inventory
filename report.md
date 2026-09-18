@@ -70,7 +70,7 @@ Ask: document that history is engine-native and that audit requirements must be 
 ### D. Identity, authorization, filters
 
 - `identityService.*` 151 sites, `authorizationService.*` 121, `filterService.*` 45, plus `ReadOnlyIdentityProvider`, LDAP/Keycloak identity plugins, `ProcessEngineAuthenticationFilter`.
-- Zero counterpart. Clearly by design, but it is the second-largest block of code in the consulting repo and is common in enterprise C7 apps (provisioning users/groups/tenants at startup, candidate group logic).
+- Zero counterpart. Clearly by design, but by call sites it is the second-largest area in the consulting repo (315 sites, after the 789 delegate context reads in §I; the engine internals in §G are counted in imports, not call sites) and is common in enterprise C7 apps (provisioning users/groups/tenants at startup, candidate group logic).
 
 ### E. Process instance lifecycle and variables outside tasks
 
@@ -84,7 +84,7 @@ Ask: document that history is engine-native and that audit requirements must be 
 | `createProcessInstanceModification` | 2 | |
 | `getActiveActivityIds` | 2 | |
 
-Adapter citations in §E, §I and §J refer to `bpm-crafters/process-engine-adapters-camunda-7` at `d2be36e`: `emb:` = `engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/`, `rem:` = `engine-adapter/c7-remote-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/`, `docs:` = `docs/`; `api:` = `bpm-crafters/process-engine-api` at `b025698`, `api/src/main/kotlin/dev/bpmcrafters/processengineapi/`.
+Adapter citations in §E, §I, §J and §M refer to `bpm-crafters/process-engine-adapters-camunda-7` at `d2be36e`: `emb:` = `engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/`, `rem:` = `engine-adapter/c7-remote-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/`, `docs:` = `docs/`; `api:` = `bpm-crafters/process-engine-api` at `b025698`, `api/src/main/kotlin/dev/bpmcrafters/processengineapi/`.
 
 `CommonRestrictions.EXECUTION_ID` exists, but the C7 adapter does not honour it for message correlation. Both `CorrelationApiImpl` classes accept only `tenantId`, `withoutTenantId` and `useGlobalCorrelationKey` (emb: `correlation/CorrelationApiImpl.kt:59-63`, rem: `correlation/CorrelationApiImpl.kt:63-67`); any other key fails `ensureSupported` with `IllegalArgumentException` (api: `RestrictionAware.kt:27-28`). `messageEventReceived(name, executionId)` (6) has no path through `CorrelationApi`.
 
@@ -211,7 +211,7 @@ Ask: document three points:
 
 ### M. Forms
 
-- `formService.getTaskFormData / getStartFormKey` (3). Not in the API; form keys may or may not appear in task meta.
+- `formService.getTaskFormData / getStartFormKey` (3). Not in the API. For user tasks, both adapters write the form key into task meta as `formKey` when the task has one (emb: `task/delivery/TaskInformationExtensions.kt:26`, rem: `task/delivery/TaskInformationExtensions.kt:45`); the adapter docs' meta-key tables do not list it (docs: `reference-c7-embedded.md:175-208`, `reference-c7-remote.md:210-243`). Form field data (`getTaskFormData`, 2 sites) and start form keys (`getStartFormKey`, 1 site) have no counterpart.
 
 ## 3. Summary table
 
@@ -245,10 +245,10 @@ Ask: document three points:
 
 ## 5. Concrete asks to maintainers
 
-1. **Meta-key table per adapter** (§I). Highest value per line of documentation.
+1. **Complete the per-adapter meta-key tables** (§I). The adapter docs already list meta keys for user and service tasks. Still missing: the guaranteed / conditional / absent marking, and six keys (`processInstanceId`, `businessKey`, `formKey`, `retries`, `processDefinitionVersionTag`, `reason`). Highest value per line of documentation.
 2. **Stance on queries** (§B): minimal read-only API, or explicit out-of-scope.
 3. **Adapter behaviour for variables** (§J): scope, serialization, removal.
-4. **Feature matrix additions**: CMMN (not supported), execution-targeted correlation via `EXECUTION_ID` (supported?), listeners (out of scope).
+4. **Feature matrix additions**: CMMN (not supported) and listeners (out of scope); the feature matrix in the process-engine-api README has a row for neither. For `EXECUTION_ID` (§E), the adapter docs already list the message-correlation restrictions, and `executionId` is not among them; still missing is a restriction table for signals, where the adapter honours `executionId`.
 5. Optional: a short "portability checklist" mapping C7 packages/interfaces → {API / engine-native / rewrite}. The counts above suggest where to start.
 
 ## Caveats
