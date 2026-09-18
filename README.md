@@ -1,11 +1,11 @@
 # Camunda 7 → process-engine-api portability inventory
 
-This repository verifies and hosts a static inventory of how open-source Camunda 7 code uses the engine, compared against the [process-engine-api](https://github.com/bpm-crafters/process-engine-api).
+This repository verifies and hosts a static inventory of how open-source Camunda 7 code uses the engine, compared against the [process-engine-api](https://github.com/bpm-crafters/process-engine-api). It also contains a reproducer for three bugs in the embedded Camunda 7 adapter (`c7-embedded-core` in [process-engine-adapters-camunda-7](https://github.com/bpm-crafters/process-engine-adapters-camunda-7)): the bug reports are in [issues/](issues/), the failing tests in [reproducer/](reproducer/).
 
 | File | Content |
 |---|---|
 | [report.md](report.md) | Standalone field report: Camunda 7 engine usage counted in two open-source codebases and held against process-engine-api, with what maps, what does not, a summary table, and documentation asks for the maintainers of the API and its Camunda 7 adapter (section 5). It files no bugs; those are in `issues/`. |
-| [verification.md](verification.md) | Every count in `report.md`: reported vs measured, delta, method. Also: claims corrected, gaps the Camunda 7 adapter already covers, open questions. |
+| [verification.md](verification.md) | Every count in `report.md`: reported vs measured, delta, method. Reported is the value in the first draft of the report (commit `653cdf2`); measured is what the scripts count now. Also: claims corrected, gaps the Camunda 7 adapter already covers, open questions. |
 | [issues/](issues/) | Drafts of three bug reports for [process-engine-adapters-camunda-7](https://github.com/bpm-crafters/process-engine-adapters-camunda-7), all in `c7-embedded-core`, written to that repository's bug template with the reproducer's results. |
 | [reproducer/](reproducer/) | Maven project that runs the embedded adapter on an in-memory Camunda 7 engine, with one failing test per bug in `issues/` ([reproducer/README.md](reproducer/README.md)). |
 | `scripts/` | Everything used to produce the numbers and citations. Runnable from the repository root. |
@@ -18,11 +18,11 @@ The three bugs in `issues/` are reproduced by the Maven project in `reproducer/`
 ```sh
 git clone https://github.com/WilliePim/camunda7-portability-inventory.git camunda7-portability-inventory
 cd camunda7-portability-inventory/reproducer
-export JAVA_HOME="$HOME/.jdks/jdk-21.0.12.1+1"   # the Temurin 21 of the recorded run; use the path of your JDK 21
+export JAVA_HOME=/path/to/jdk-21   # replace with the folder of your JDK 21
 ./mvnw test
 ```
 
-Maven runs on the JDK in `JAVA_HOME` and falls back to the first `java` on the `PATH` only when `JAVA_HOME` is unset, which can be a different JDK; set it explicitly. On macOS: `export JAVA_HOME=$(/usr/libexec/java_home -v 21)`. In PowerShell: `$env:JAVA_HOME = "$HOME\.jdks\jdk-21.0.12.1+1"`, then `.\mvnw.cmd test`.
+Maven runs on the JDK in `JAVA_HOME` and falls back to the first `java` on the `PATH` only when `JAVA_HOME` is unset, which can be a different JDK; set it explicitly. To find the path of your JDK 21, the folder that contains `bin/java`: on macOS `/usr/libexec/java_home -v 21` prints it, on Linux JDKs are usually folders under `/usr/lib/jvm/`, and in PowerShell `Get-ChildItem 'C:\Program Files\Eclipse Adoptium', 'C:\Program Files\Java' -Directory -ErrorAction SilentlyContinue` lists the usual install folders. In PowerShell, set it with `$env:JAVA_HOME = 'C:\path\to\jdk-21'` and run `.\mvnw.cmd test`.
 
 Expected result: `Tests run: 9, Failures: 3, Errors: 2` and `BUILD FAILURE`. The build fails on purpose. The five bug tests assert the behaviour the API describes, so they fail while the bugs exist; the four `observed_*` tests record what the adapter and the engine do, and pass. Full output, with stack traces, is in `target/surefire-reports/`; the result of each test is in [reproducer/README.md](reproducer/README.md).
 
@@ -33,7 +33,7 @@ Expected result: `Tests run: 9, Failures: 3, Errors: 2` and `BUILD FAILURE`. The
 | `camunda-engine` | 7.24.0, on H2 2.3.232 in memory |
 | JDK | Java 21, which Camunda 7.24 [lists as supported](https://docs.camunda.org/manual/7.24/introduction/supported-environments/#java); recorded run on Eclipse Temurin 21.0.12.1+1 |
 
-## Running from a clean checkout
+## Running the inventory scripts
 
 You need git, Python 3 (tested with 3.13) and network access to github.com. The commands are for a POSIX shell; Git Bash works on Windows. PowerShell differences are noted below the block.
 
@@ -84,13 +84,10 @@ Options:
 | Command | Effect |
 |---|---|
 | `python scripts/inventory.py --explain 1.start.chained` | Lists every counted site and every rejected same-name site for one row. Row ids are in `scripts/inventory.py` and in the Method column of `verification.md`. |
-| `python scripts/inventory.py --json out/inventory.json` | Also writes the table as JSON. `out/` is git-ignored. |
 | `python scripts/delegates.py --sites` | Lists every entry-point call site. |
 | `python scripts/clone.py --latest` | Fetches default-branch HEAD instead of the pinned commits and prints the new hashes. To analyse them, update the commits in `scripts/repos.py`. |
 
 `scripts/repos.py` (repositories, pinned commits, main-source rule), `scripts/javaindex.py` (import-aware Java index) and `scripts/delegate_scopes.py` (delegate scopes and entry points) are modules used by the scripts above.
-
-`adapter_facts.py` exits with status 1 when a cited adapter line no longer contains the expected source text.
 
 ## Analysed repositories
 
@@ -101,16 +98,20 @@ Cloned on 2026-09-17 with `--depth 1`.
 | [camunda/camunda-bpm-examples](https://github.com/camunda/camunda-bpm-examples) | `6c7f4c4adb4beb9a2f5d4c5e49fc1ddfc6dab3fc` | Camunda 7 corpus (124 main `.java` files) |
 | [camunda-consulting/code](https://github.com/camunda-consulting/code) | `c9ef30b62a47a7063c077397cb3340b28fb4cc3c` | Camunda 7 corpus (1,297 main `.java` files); `snippets/reverse-adapter/` excluded as Camunda 8 / Zeebe |
 | [bpm-crafters/process-engine-api](https://github.com/bpm-crafters/process-engine-api) | `b02569855596de4fb423dc181489e72595235503` | API reference (`api` module, version `1.8-SNAPSHOT`) |
-| [bpm-crafters/process-engine-adapters-camunda-7](https://github.com/bpm-crafters/process-engine-adapters-camunda-7) | `d2be36eca2edf24d1e1a43540cee77d9e9dffd21` | Adapter behaviour for sections E, I, J (the build pins `process-engine-api` 1.7) |
+| [bpm-crafters/process-engine-adapters-camunda-7](https://github.com/bpm-crafters/process-engine-adapters-camunda-7) | `d2be36eca2edf24d1e1a43540cee77d9e9dffd21` | Adapter behaviour for sections E, I, J and M, all in section 2 of `report.md` (the build pins `process-engine-api` 1.7) |
+
+The report and the issue drafts cite the adapter at `d2be36e` on `develop`; the reproducer runs the release 2026.09.1. Every cited adapter file is byte-identical in both except `engine-adapter/c7-remote-core/pom.xml`, which differs only in its parent version (`2026.09.2-SNAPSHOT` on `develop`), outside the cited lines; the process-engine-api files cited at `b025698` are byte-identical in 1.7, the API version of the release.
 
 Main sources are `.java` files under `src/main/`. Test sources and build helpers such as `.mvn/wrapper` are excluded.
 
 ## Known limitations
 
-- **Static analysis only.** Nothing is compiled or executed.
+The limits below apply to the inventory: the scripts in `scripts/`, `report.md` and `verification.md`. They do not apply to the three adapter bugs in `issues/`, which the reproducer observes at runtime against the released adapter instead of inferring them from source.
+
+- **Static analysis only.** The inventory scripts parse the analysed sources; nothing in them is compiled or executed.
   - Call receivers are typed from declarations, imports and known Camunda getter chains, without a classpath.
   - A receiver the index cannot resolve is not counted, so counts err low.
-  - Adapter behaviour is read from source, not observed at runtime.
+  - The adapter behaviour described in the report's sections is read from source, not observed at runtime. The three bugs are the exception: each one is shown by a failing test in `reproducer/`.
 - **Java only.** Not analysed: BPMN/DMN/CMMN XML (e.g. `camunda:delegateExpression` bindings), scripts embedded in models, and non-Java sources. Neither corpus contains Kotlin.
 - **Snippet repositories, not applications.**
   - Both corpora are samples and consulting snippets: many small projects, some near-duplicates, some generated code (e.g. an OpenAPI client).
