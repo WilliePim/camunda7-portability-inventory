@@ -253,9 +253,7 @@ the scripts in this repository and re-runs from scratch; where a
 classification needed human judgment instead of parsing, it is marked
 as such and listed site by site in verification.md. The asks in §5 are
 the documentation gaps that survived verification — several from the
-draft did not, because the adapter already covers them. If the method
-is useful upstream, I'm happy to adapt the scripts or keep the counts
-current as the API evolves.
+draft did not, because the adapter already covers them.
 
 ## 5. Concrete asks to maintainers
 
