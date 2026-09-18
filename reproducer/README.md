@@ -9,7 +9,7 @@ Runs the embedded Camunda 7 adapter of [process-engine-adapters-camunda-7](https
 | `camunda-engine` | 7.24.0, on H2 2.3.232 in memory |
 | JUnit | 5.11.4 |
 
-Compiled for Java 17. Last run with JDK 19.0.2 on Windows 10 Pro (10.0.19045) and Maven 3.9.12 through the wrapper.
+Compiled for Java 21, which Camunda 7.24 lists as supported ([Supported Environments, Java](https://docs.camunda.org/manual/7.24/introduction/supported-environments/#java)). It needs a JDK 21 or newer; the wrapper uses the one in `JAVA_HOME`. Last run with Eclipse Temurin 21.0.12.1+1 on Windows 10 Pro (10.0.19045) and Maven 3.9.12 through the wrapper.
 
 ## Run
 
