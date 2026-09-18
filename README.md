@@ -106,7 +106,7 @@ Main sources are `.java` files under `src/main/`. Test sources and build helpers
 
 ## Known limitations
 
-The limits below apply to the inventory: the scripts in `scripts/`, `report.md` and `verification.md`. They do not apply to the three adapter bugs in `issues/`, which the reproducer observes at runtime against the released adapter instead of inferring them from source.
+The limits below apply to the inventory: the scripts in `scripts/`, `report.md` and `verification.md`. They do not apply to the three adapter bugs in [issues/](issues/), which the reproducer observes at runtime against the released adapter instead of inferring them from source.
 
 - **Static analysis only.** The inventory scripts parse the analysed sources; nothing in them is compiled or executed.
   - Call receivers are typed from declarations, imports and known Camunda getter chains, without a classpath.
