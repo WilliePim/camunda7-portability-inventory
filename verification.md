@@ -28,6 +28,8 @@ Engine implementation classes (`TaskServiceImpl`, …) count as their service in
 |---|---|---|---:|---:|---:|---:|---:|---|
 | Method | camunda-bpm-examples main .java files | examples | 122 | 124 | +2 | 124 |  | `inventory.py m.files.examples` |
 | Method | camunda-consulting/code main .java files (C7 only) | consulting | 1,298 | 1297 | -1 |  | 1297 | `inventory.py m.files.consulting` |
+| Method | … under snippets/ | consulting | — | 1052 |  |  | 1052 | `inventory.py m.files.consulting.snippets` |
+| Method | … under one-time-examples/ | consulting | — | 245 |  |  | 245 | `inventory.py m.files.consulting.oneTime` |
 | 1 | runtimeService.startProcessInstanceByKey / ById | both | 18 | 19 | +1 | 6 | 13 | `inventory.py 1.start.direct` |
 | 1 | … chained | both | 51 | 27 | -24 | 6 | 21 | `inventory.py 1.start.chained` |
 | 1 | runtimeService.startProcessInstanceByMessage | both | 2 | 2 | +0 | 1 | 1 | `inventory.py 1.startByMessage` |
@@ -131,21 +133,25 @@ Engine implementation classes (`TaskServiceImpl`, …) count as their service in
 | 2L | getProcessDefinition | both | 3 | 3 | +0 | 0 | 3 | `inventory.py 2L.processDefinition` |
 | 2M | formService.getTaskFormData / getStartFormKey | both | 3 | 3 | +0 | 0 | 3 | `inventory.py 2M.forms` |
 | 3 | Start / correlate / signal | both | ~90 | 63 | -27 | 13 | 50 | `inventory.py 3.startCorrelate` = sum of 1.start.direct, 1.start.chained, 1.startByMessage, 1.correlate.direct, 1.correlate.chained, 1.signalEvent |
-| 3 | External-task worker style | both | ~40 | 39 | -1 | 6 | 33 | `inventory.py 3.externalTask` = sum of 1.ext.complete, 1.ext.handleFailure, 1.ext.handler |
-| 3 | User task complete / assign / by-error | both | ~35 | 37 | +2 | 3 | 34 | `inventory.py 3.userTask` = sum of 1.task.complete.direct, 1.task.complete.chained, 1.task.claim, 1.bpmnError |
+| 3 | External-task worker style (call sites) | both | ~40 | 33 | -7 | 6 | 27 | `inventory.py 3.externalTask` = sum of 1.ext.complete, 1.ext.handleFailure |
+| 3 | External-task worker style: handler classes | both | — | 6 |  | 0 | 6 | `inventory.py 3.externalTaskClasses` = sum of 1.ext.handler |
+| 3 | User task complete / assign | both | ~35 | 26 | -9 | 1 | 25 | `inventory.py 3.userTask` = sum of 1.task.complete.direct, 1.task.complete.chained, 1.task.claim |
+| 3 | BPMN error from a service task (JavaDelegate) | both | — | 11 |  | 2 | 9 | `inventory.py 3.serviceTaskError` = sum of 1.bpmnError |
 | 3 | Deployment, DMN evaluate | both | ~10 | 16 | +6 | 5 | 11 | `inventory.py 3.deployDmn` = sum of 1.deploy, 1.dmn |
 | 3 | Delegates & listeners: classes (both repos) | both | 231 | 257 | +26 | 26 | 231 | `inventory.py 3.delegateClasses` (delegate_scopes) |
-| 3 | Delegates & listeners: nested engine calls, entry-point sites (both repos) | both | 59 | 73 | +14 | 1 | 72 | `inventory.py 3.delegateCalls` (delegate_scopes) |
+| 3 | Delegates & listeners: entry-point call sites (both repos) | both | 59 | 73 | +14 | 1 | 72 | `inventory.py 3.delegateCalls` (delegate_scopes) |
 | 3 | Queries | both | ~135 | 160 | +25 | 9 | 151 | `inventory.py 3.queries` = sum of 2B.taskQuery.direct, 2B.taskQuery.chained, 2B.historyQuery, 2B.runtimeQuery, 2B.repositoryQuery, 2B.jobQuery |
-| 3 | History infrastructure (classes) | both | ~12 | 14 | +2 | 2 | 12 | `inventory.py 3.historyInfra` = sum of 2C.historyEventHandler, 2C.dbHistoryEventHandler, 2C.historyLevel, 2C.historyEventProducer, 2C.dynamicRemovalTime |
+| 3 | History infrastructure (classes) | both | ~12 | 12 | +0 | 2 | 10 | `inventory.py 3.historyInfra` = sum of 2C.historyEventHandler, 2C.dbHistoryEventHandler, 2C.historyLevel, 2C.historyEventProducer |
 | 3 | Identity / authorization / filters | both | ~280 | 317 | +37 | 2 | 315 | `inventory.py 3.identity` = sum of 2D.identity, 2D.authorization, 2D.filter |
 | 3 | Instance lifecycle, instance variables | both | ~30 | 34 | +4 | 2 | 32 | `inventory.py 3.lifecycle` = sum of 2E.variables, 2E.signal, 2E.messageEventReceived, 2E.deleteProcessInstance, 2E.suspendActivate, 2E.modification, 2E.activeActivityIds |
-| 3 | Jobs / incidents / retries | both | ~20 | 16 | -4 | 0 | 16 | `inventory.py 3.jobs` = sum of 2F.jobOps, 2F.incidents, 2F.jobRetryCmd, 2F.incidentHandler, 2F.timerEventJobHandler |
+| 3 | Jobs / incidents / retries (call sites) | both | ~20 | 6 | -14 | 0 | 6 | `inventory.py 3.jobs` = sum of 2F.jobOps, 2F.incidents |
+| 3 | Jobs / incidents / retries: classes | both | — | 10 |  | 0 | 10 | `inventory.py 3.jobsClasses` = sum of 2F.jobRetryCmd, 2F.incidentHandler, 2F.timerEventJobHandler |
 | 3 | Engine internals: impl.* imports (both repos) | both | 615 | 698 | +83 | 81 | 617 | `inventory.py 3.implImports` |
 | 3 | Engine internals: files (both repos) | both | 176 | 201 | +25 | 25 | 176 | `inventory.py 3.implFiles` |
-| 3 | CMMN | both | ~55 | 41 | -14 | 0 | 41 | `inventory.py 3.cmmn` = sum of 2H.caseService, 2H.caseExecutionListener |
+| 3 | CMMN (call sites) | both | ~55 | 31 | -24 | 0 | 31 | `inventory.py 3.cmmn` = sum of 2H.caseService |
+| 3 | CMMN: listener classes | both | — | 10 |  | 0 | 10 | `inventory.py 3.cmmnClasses` = sum of 2H.caseExecutionListener |
 | 3 | Delegate context reads | both | ~700 | 807 | +107 | 18 | 789 | `inventory.py 3.contextReads` = sum of 2I.getVariable, 2I.setVariable, 2I.getId, 2I.getProcessInstanceId, 2I.getCurrentActivityId, 2I.getCurrentActivityName, 2I.getProcessBusinessKey, 2I.getProcessDefinitionId, 2I.getBpmnModelElementInstance, 2I.getTenantId |
-| 3 | Variable scope / typed values | both | ~20 | 21 | +1 | 0 | 21 | `inventory.py 3.variableScope` = sum of 2J.setVariableLocal, 2J.getVariableLocal, 2J.removeVariable, 2J.hasVariable |
+| 3 | Local variables, removal, existence checks | both | ~20 | 21 | +1 | 0 | 21 | `inventory.py 3.variableScope` = sum of 2J.setVariableLocal, 2J.getVariableLocal, 2J.removeVariable, 2J.hasVariable |
 
 All numeric corrections in `report.md` use the Measured column. Where the report wrote "≈" or "~", the corrected value is an exact count and the sign was dropped. No count was unreproducible: every row has a definition in `scripts/inventory.py` and a measured value.
 
@@ -169,6 +175,7 @@ All numeric corrections in `report.md` use the Measured column. Where the report
 | … implementing JavaDelegate | 24 | 185 | 209 |
 | … implementing ExecutionListener | 1 | 25 | 26 |
 | … implementing TaskListener | 1 | 22 | 23 |
+| … implementing more than one of them | 0 | 1 | 1 |
 | … of which implement an interface directly | 26 | 231 | 257 |
 | abstract classes implementing one (not in headline) | 0 | 1 | 1 |
 | anonymous classes (not in headline) | 0 | 0 | 0 |
@@ -264,7 +271,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
    - 2 of the 9 hits for `runtimeService.correlateMessage / createMessageCorrelation` are commented out.
    - 3 chained correlations split across lines were not matched.
 
-   **Correction:** all counts replaced by parser-based values (§1 table). The Method sentence itself is not amended.
+   **Correction:** all counts replaced by parser-based values (§1 table). The Method and Caveats sections now describe the parse, keep the grep contrast, state the consulting corpus composition (`m.files.consulting.snippets` 1,052, `m.files.consulting.oneTime` 245) and name the unit of every count that is not a call-site count.
 
 ### Section 1
 
@@ -281,7 +288,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 
 ### Section 2A (headline)
 
-8. **"184 `JavaDelegate`" → 185.** The additional class is `DelegationCodeTestProxy` (see item 1). It implements both `JavaDelegate` and `ExecutionListener`, so the per-interface counts (185 + 25 + 22 = 232) exceed the 231 distinct classes.
+8. **"184 `JavaDelegate`" → 185.** The additional class is `DelegationCodeTestProxy` (see item 1). It implements both `JavaDelegate` and `ExecutionListener`, so the per-interface counts (185 + 25 + 22 = 232) exceed the 231 distinct classes. Amended: §2A now states this overlap (`delegates.py` row "… implementing more than one of them": 1).
 9. **"44 of the 231 delegate files … via `execution.getProcessEngineServices()` (59 sites total)" → 47 / 72.** The corrected numbers count all four entry points (§2). The sentence names only one entry point; the 72 consulting sites split into:
    - 57 `DelegateExecution.getProcessEngineServices()`
    - 10 `DelegateTask.getProcessEngineServices()`
@@ -303,7 +310,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 ### Sections 2B–2M
 
 11. **§2B "This is the largest surface with no counterpart" and §3 "largest gap".** Unsupported by the counts. Queries total 160 sites, while identity / authorization / filters total 317 and delegate context reads total 807. Amended: §2B and the §3 verdict now compare queries (160) with identity / authorization / filters (317).
-12. **§2C `DynamicRemovalTimeCalculationStrategy` (2).** This is not a Camunda type. It is an interface declared in the snippet (`com.camunda.bpm.demo.engine_plugin_variable_depending_history_ttl.strategy`), with 2 implementations. The Camunda extension point behind it is `HistoryRemovalTimeProvider`, implemented once. The count is correct for the local interface; not amended. Also: custom `HistoryLevel` 2 → 4 (2 in the examples repository).
+12. **§2C `DynamicRemovalTimeCalculationStrategy` (2).** This is not a Camunda type. It is an interface declared in the snippet (`com.camunda.bpm.demo.engine_plugin_variable_depending_history_ttl.strategy`), with 2 implementations. The Camunda extension point behind it is `HistoryRemovalTimeProvider`, implemented once. Amended: removed from §2C, and the §3 history row is recounted without it (`3.historyInfra` = 12 classes). Also: custom `HistoryLevel` 2 → 4 (2 in the examples repository).
 13. **§2D identity items.** The row lists `AuthenticationExtractor`, which resolves to `org.camunda.optimize.plugin.security.authentication.AuthenticationExtractor`: an Optimize plugin interface, not an engine or web-app type. Amended: removed from §D. "Second-largest block of code in the consulting repo" had no measure behind it. Amended: §D now states the ranking by call sites in the consulting repository (identity / authorization / filters 315, after delegate context reads 789; `inventory.py` rows `3.identity` and `3.contextReads`). Counts corrected: `identityService.*` 151, `authorizationService.*` 121, `filterService.*` 45.
 14. **§2F `createIncident / resolveIncident` (9) → 0.** The grep hits are:
     - method declarations and `super.resolveIncident(...)` calls inside custom `IncidentHandler` classes;
@@ -324,10 +331,15 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 20. **Verdicts contradicted by §E and §I (since amended in §3):**
     - "`EXECUTION_ID` may cover part": the adapter rejects `EXECUTION_ID` for message correlation and honours it only for signals and task subscriptions.
     - "meta keys undocumented": the adapter docs contain meta-key tables.
+    - "Instance lifecycle, instance variables | 34 | partial": checked site by site (`inventory.py --explain 2E.*`). 7 of the 34 have an API path:
+      - `SupplierAdapter.java:46-47` (setVariable + messageEventReceived): one `CorrelateMessageCmd` with a global correlation variable;
+      - `TaskListService.java:54` and `:80`, `TaskDataConfiguration.java:83`, `:84`, `:86`: calls made for a known user task, covered by `UserTaskSupport.getTaskInformation` / `getPayload` (api `task/support/UserTaskSupport.kt:56`, `:38`).
+
+      The other 27 have none: 10 instance-variable calls (other process instances, own execution inside a delegate, conditional-event triggers, an engine plugin), 4 `signal(executionId)`, 5 `messageEventReceived`, 1 `deleteProcessInstance`, 4 suspend/activate, 2 running-instance modifications, 1 `getActiveActivityIds` for a diagram. The verdict stays "partial", with a note under the §3 table.
 
 ### Sections E, I, J (amended)
 
-21. **§E "execution-targeted correlation may be expressible".** Wrong for the C7 adapter: `EXECUTION_ID` is not a supported correlation restriction and is rejected with `IllegalArgumentException`. Corrected in §E.
+21. **§E "execution-targeted correlation may be expressible".** Wrong for the C7 adapter: `EXECUTION_ID` is not a supported correlation restriction and is rejected with `IllegalArgumentException`. Corrected in §E. Of the 6 `messageEventReceived(name, executionId)` sites, 1 finds its execution through a process variable and can be expressed as a correlation on that variable with `useGlobalCorrelationKey` (`one-time-examples/oop2013-cookshow/.../SupplierAdapter.java:43-47`). The other 5 cannot: 3 target a process instance by id (`snippets/subtask-hierarchy/.../CamundaBpmProcessApplication.java:39`, `:44`, `.../InfoRestService.java:40`) and 2 by business key and activity (`snippets/asynchronous-messaging-jms/.../CallbackService.java:80`, `:99`). The §2E table and the §E text both state this.
 22. **§I "could not find … a guaranteed list of meta keys" and "process definition id (versioned) … not named anywhere".**
     - The API module has no list, but the adapter docs have per-adapter tables.
     - `CommonRestrictions.PROCESS_DEFINITION_ID` exists, and every adapter flavour writes `processDefinitionId`.
@@ -338,7 +350,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 
 ### Sections 4–5 and M (not amended)
 
-24. **§5 ask 4 "execution-targeted correlation via `EXECUTION_ID` (supported?)".** Answer: not supported for message correlation, supported for signals (§E). Amended: ask 4 now asks only for the CMMN and listener rows missing from the API README feature matrix and for a signal restriction table; ask 1 now asks only for the guaranteed / conditional marking and the six keys missing from the existing adapter meta-key tables.
+24. **§5 ask 4 "execution-targeted correlation via `EXECUTION_ID` (supported?)".** Answer: not supported for message correlation, supported for signals (§E). Amended: ask 4 now asks only for the CMMN and listener rows missing from the API README feature matrix and for a signal restriction table; ask 1 now asks only for the guaranteed / conditional marking and the six keys missing from the existing adapter meta-key tables; ask 3 acknowledges the embedded serialization docs and asks only for scope, removal and the remote `ValueMapper` rules.
 25. **§M "form keys may or may not appear in task meta".** `formKey` is written for user tasks by both adapters, conditional on a non-null value (`emb: task/delivery/TaskInformationExtensions.kt:26`, `rem: task/delivery/TaskInformationExtensions.kt:45`). Amended: §M now states this coverage, the missing `formKey` row in the adapter docs tables, and which form calls have no counterpart.
 
 ## 4. Gaps in report.md the adapter already covers

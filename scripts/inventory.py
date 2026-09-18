@@ -96,9 +96,11 @@ class Delegates:
 @dataclass
 class Files:
     rule: str  # main | draft
+    prefix: str = ""  # only files under this top-level folder
 
     def describe(self) -> str:
-        return "`src/main/` .java files, C8 folders excluded" if self.rule == "main" else "draft rule: .java paths without `/test/`"
+        base = "`src/main/` .java files, C8 folders excluded" if self.rule == "main" else "draft rule: .java paths without `/test/`"
+        return f"{base}, under `{self.prefix}`" if self.prefix else base
 
 
 @dataclass
@@ -129,6 +131,8 @@ SPECS: list[Spec] = [
     # ---------------------------------------------------------------- method
     Spec("m.files.examples", "Method", "camunda-bpm-examples main .java files", "122", Files("main"), "examples"),
     Spec("m.files.consulting", "Method", "camunda-consulting/code main .java files (C7 only)", "1,298", Files("main"), "consulting"),
+    Spec("m.files.consulting.snippets", "Method", "… under snippets/", "—", Files("main", "snippets/"), "consulting"),
+    Spec("m.files.consulting.oneTime", "Method", "… under one-time-examples/", "—", Files("main", "one-time-examples/"), "consulting"),
     # ------------------------------------------------------------ section 1
     Spec("1.start.direct", "1", "runtimeService.startProcessInstanceByKey / ById", "18",
          Calls({RS}, "startProcessInstanceBy(Key|Id)", "direct", hint=hint("runtimeService"))),
@@ -264,29 +268,33 @@ SPECS: list[Spec] = [
     # ------------------------------------------------------------ section 3
     Spec("3.startCorrelate", "3", "Start / correlate / signal", "~90",
          Sum(["1.start.direct", "1.start.chained", "1.startByMessage", "1.correlate.direct", "1.correlate.chained", "1.signalEvent"])),
-    Spec("3.externalTask", "3", "External-task worker style", "~40", Sum(["1.ext.complete", "1.ext.handleFailure", "1.ext.handler"])),
-    Spec("3.userTask", "3", "User task complete / assign / by-error", "~35",
-         Sum(["1.task.complete.direct", "1.task.complete.chained", "1.task.claim", "1.bpmnError"])),
+    Spec("3.externalTask", "3", "External-task worker style (call sites)", "~40", Sum(["1.ext.complete", "1.ext.handleFailure"])),
+    Spec("3.externalTaskClasses", "3", "External-task worker style: handler classes", "—", Sum(["1.ext.handler"])),
+    Spec("3.userTask", "3", "User task complete / assign", "~35",
+         Sum(["1.task.complete.direct", "1.task.complete.chained", "1.task.claim"])),
+    Spec("3.serviceTaskError", "3", "BPMN error from a service task (JavaDelegate)", "—", Sum(["1.bpmnError"])),
     Spec("3.deployDmn", "3", "Deployment, DMN evaluate", "~10", Sum(["1.deploy", "1.dmn"])),
     Spec("3.delegateClasses", "3", "Delegates & listeners: classes (both repos)", "231", Delegates("classes")),
-    Spec("3.delegateCalls", "3", "Delegates & listeners: nested engine calls, entry-point sites (both repos)", "59", Delegates("entry_sites")),
+    Spec("3.delegateCalls", "3", "Delegates & listeners: entry-point call sites (both repos)", "59", Delegates("entry_sites")),
     Spec("3.queries", "3", "Queries", "~135",
          Sum(["2B.taskQuery.direct", "2B.taskQuery.chained", "2B.historyQuery", "2B.runtimeQuery", "2B.repositoryQuery", "2B.jobQuery"])),
     Spec("3.historyInfra", "3", "History infrastructure (classes)", "~12",
-         Sum(["2C.historyEventHandler", "2C.dbHistoryEventHandler", "2C.historyLevel", "2C.historyEventProducer", "2C.dynamicRemovalTime"])),
+         Sum(["2C.historyEventHandler", "2C.dbHistoryEventHandler", "2C.historyLevel", "2C.historyEventProducer"])),
     Spec("3.identity", "3", "Identity / authorization / filters", "~280", Sum(["2D.identity", "2D.authorization", "2D.filter"])),
     Spec("3.lifecycle", "3", "Instance lifecycle, instance variables", "~30",
          Sum(["2E.variables", "2E.signal", "2E.messageEventReceived", "2E.deleteProcessInstance", "2E.suspendActivate",
               "2E.modification", "2E.activeActivityIds"])),
-    Spec("3.jobs", "3", "Jobs / incidents / retries", "~20",
-         Sum(["2F.jobOps", "2F.incidents", "2F.jobRetryCmd", "2F.incidentHandler", "2F.timerEventJobHandler"])),
+    Spec("3.jobs", "3", "Jobs / incidents / retries (call sites)", "~20", Sum(["2F.jobOps", "2F.incidents"])),
+    Spec("3.jobsClasses", "3", "Jobs / incidents / retries: classes", "—",
+         Sum(["2F.jobRetryCmd", "2F.incidentHandler", "2F.timerEventJobHandler"])),
     Spec("3.implImports", "3", "Engine internals: impl.* imports (both repos)", "615", Imports(E + "impl.", "declarations")),
     Spec("3.implFiles", "3", "Engine internals: files (both repos)", "176", Imports(E + "impl.", "files")),
-    Spec("3.cmmn", "3", "CMMN", "~55", Sum(["2H.caseService", "2H.caseExecutionListener"])),
+    Spec("3.cmmn", "3", "CMMN (call sites)", "~55", Sum(["2H.caseService"])),
+    Spec("3.cmmnClasses", "3", "CMMN: listener classes", "—", Sum(["2H.caseExecutionListener"])),
     Spec("3.contextReads", "3", "Delegate context reads", "~700", Sum([f"2I.{m}" for m in (
         "getVariable", "setVariable", "getId", "getProcessInstanceId", "getCurrentActivityId", "getCurrentActivityName",
         "getProcessBusinessKey", "getProcessDefinitionId", "getBpmnModelElementInstance", "getTenantId")])),
-    Spec("3.variableScope", "3", "Variable scope / typed values", "~20",
+    Spec("3.variableScope", "3", "Local variables, removal, existence checks", "~20",
          Sum(["2J.setVariableLocal", "2J.getVariableLocal", "2J.removeVariable", "2J.hasVariable"])),
 ]
 
@@ -305,7 +313,8 @@ def measure(spec: Spec, ix: CorpusIndex, scopes: DelegateScopes, delegate_summar
     how = spec.how
     emit = log.append if log is not None else (lambda _line: None)
     if isinstance(how, Files):
-        return len(ix.corpus.main_java() if how.rule == "main" else ix.corpus.draft_rule_java()), None
+        files = ix.corpus.main_java() if how.rule == "main" else ix.corpus.draft_rule_java()
+        return sum(1 for f in files if f.startswith(how.prefix)), None
     if isinstance(how, Delegates):
         key = how.key
         if "*" in key:  # wildcard over method names: method:Service.prefix*:entry

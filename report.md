@@ -5,14 +5,14 @@
 
 ## Method
 
-Static inventory (grep of call sites, main sources only, tests excluded) on two public C7 codebases, held against `process-engine-api` `api` module (HEAD, September 2026):
+Static inventory of main sources (tests excluded) in two public C7 codebases, held against `process-engine-api` `api` module (HEAD, September 2026). The Java sources are parsed with tree-sitter, and a call is counted only when its receiver resolves to the Camunda type in question through declarations and imports; comments are ignored. Plain grep over the same sources reproduces the old, uncorrected numbers instead: it counts commented-out code and misses calls split across lines. For example, 35 of its 56 hits for chained `startProcessInstanceBy(Key|Id)` calls are in comments, and the parse counts 27 such calls.
 
 | Codebase | Main `.java` files | Why |
 |---|---|---|
 | `camunda/camunda-bpm-examples` | 124 | Official samples, broad coverage of platform integration |
-| `camunda-consulting/code` (C7 snippets only) | 1,297 | Real-world consulting patterns, closest public thing to enterprise code |
+| `camunda-consulting/code` (Camunda 7 content: 1,052 files under `snippets/`, 245 under `one-time-examples/`; the C8 folder `snippets/reverse-adapter/` excluded) | 1,297 | Real-world consulting patterns, closest public thing to enterprise code |
 
-Counts are **call sites**, not distinct features, and the consulting repo over-represents identity/authorization and platform-plugin snippets. Treat numbers as "how often this shape shows up", not as a benchmark. No customer code is included; banking patterns in the last section are from personal experience, anonymised.
+Counts are **call sites** unless a unit is given: counts of classes, import declarations or files name that unit where they appear. All counts are occurrences, not distinct features, and the consulting repo over-represents identity/authorization and platform-plugin snippets. Treat numbers as "how often this shape shows up", not as a benchmark. No customer code is included; banking patterns in the last section are from personal experience, anonymised.
 
 API surface used as reference: `DeploymentApi`, `EvaluateDecisionApi`, `StartProcessApi`, `CorrelationApi`, `SignalApi`, `TaskSubscriptionApi`, `ServiceTaskCompletionApi`, `UserTaskCompletionApi`, `UserTaskModificationApi`, `UserTaskSupport`, `CommonRestrictions`.
 
@@ -26,10 +26,10 @@ API surface used as reference: `DeploymentApi`, `EvaluateDecisionApi`, `StartPro
 | `runtimeService.signalEventReceived` | 1 | `SendSignalCmd` |
 | `externalTaskService.complete` | 24 | `ServiceTaskCompletionApi.completeTask` |
 | `externalTaskService.handleFailure` | 9 | `FailTaskCmd` (retries + backoff) |
-| `ExternalTaskHandler` implementations | 6 | `TaskSubscriptionApi` + `TaskHandler` |
+| `ExternalTaskHandler` implementations | 6 classes | `TaskSubscriptionApi` + `TaskHandler` |
 | `taskService.complete` | 3 + 12 chained | `UserTaskCompletionApi.completeTask` |
 | `taskService.claim / setAssignee` | 11 | `ChangeAssignmentModifyTaskCmd` |
-| `throw new BpmnError` from a *task* | 11 | `CompleteTaskByErrorCmd` |
+| `throw new BpmnError` from a *service task* (`JavaDelegate`) | 11 | `CompleteTaskByErrorCmd` |
 | `repositoryService.createDeployment` | 9 | `DeployBundleCommand` |
 | DMN `decisionService` / `DmnEngine.evaluate` | 7 | `EvaluateDecisionApi` |
 
@@ -39,7 +39,7 @@ The external-task style of C7 (`ExternalTaskHandler`, `complete`, `handleFailure
 
 ### A. Business logic inside the engine transaction (`JavaDelegate`, `ExecutionListener`, `TaskListener`)
 
-- **231 delegate/listener classes** (185 `JavaDelegate`, 25 `ExecutionListener`, 22 `TaskListener`) in the consulting repo, 24 + 2 in the examples.
+- **231 delegate/listener classes** (185 `JavaDelegate`, 25 `ExecutionListener`, 22 `TaskListener`) in the consulting repo, 24 + 2 classes in the examples. One consulting class implements both `JavaDelegate` and `ExecutionListener`, so the three per-interface figures add up to 232 for 231 classes.
 - The API has no in-transaction hook: work is done by a subscriber *outside* the engine transaction and completed via a future.
 - **47 of the 231 delegate/listener classes call engine services from inside the delegate** through four entry points (72 sites total): `DelegateExecution.getProcessEngineServices()` (57), `DelegateTask.getProcessEngineServices()` (10), `Context.getProcessEngineConfiguration()` (3), `Context.getCommandContext()` (2). Engine calls reached through them include `startProcessInstanceByKey` (4), `correlateMessage` (2), `taskService.complete` (5), `taskService.createTaskQuery` (4), `historyService.create*Query` (13), `repositoryService.*` (9), `identityService.*` (17), `caseService.*` (4).
 - Some of these calls exist in the API (start, correlate) but the **semantics change**: in C7 they run in the same transaction as the calling delegate (atomic, rolled back together); in the API they are independent async commands. This is the pattern that decides the effort of a migration, and it is invisible to BPMN-level analysers.
@@ -62,7 +62,7 @@ Ask: either a minimal read-only `TaskQueryApi` / `ProcessInstanceQueryApi` (by b
 
 ### C. History and audit
 
-- 38 history query sites (above) plus **custom history infrastructure**: `HistoryEventHandler` (4), `DbHistoryEventHandler` subclasses (2), custom `HistoryLevel` (4), `HistoryEventProducer` (2), `DynamicRemovalTimeCalculationStrategy` (2).
+- 38 history query sites (above) plus **custom history infrastructure**, in classes: `HistoryEventHandler` (4), `DbHistoryEventHandler` subclasses (2), custom `HistoryLevel` (4), `HistoryEventProducer` (2).
 - Nothing in the API touches history. In regulated environments (banking) history is a compliance artefact, not a nice-to-have; C8's history model is also different.
 
 Ask: document that history is engine-native and that audit requirements must be met by the application (event sourcing / outbox from workers), not by the API.
@@ -78,7 +78,7 @@ Ask: document that history is engine-native and that audit requirements must be 
 |---|---|---|
 | `runtimeService.setVariable / getVariable / getVariables` | 15 | variables on a running instance, not on a task |
 | `runtimeService.signal(executionId)` | 4 | *execution* signal (wait state), not a BPMN signal event — different from `SendSignalCmd` |
-| `runtimeService.messageEventReceived(name, executionId)` | 6 | maps partially to correlation, but targets an execution id |
+| `runtimeService.messageEventReceived(name, executionId)` | 6 | maps partially to correlation: 1 site finds the execution through a process variable; 5 target it by id, or by business key and activity (see below) |
 | `deleteProcessInstance` | 1 | |
 | `suspend/activateProcessInstanceByProcessDefinitionKey` | 4 | |
 | `createProcessInstanceModification` | 2 | |
@@ -86,28 +86,28 @@ Ask: document that history is engine-native and that audit requirements must be 
 
 Adapter citations in §E, §I, §J and §M refer to `bpm-crafters/process-engine-adapters-camunda-7` at `d2be36e`: `emb:` = `engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/`, `rem:` = `engine-adapter/c7-remote-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/remote/`, `docs:` = `docs/`; `api:` = `bpm-crafters/process-engine-api` at `b025698`, `api/src/main/kotlin/dev/bpmcrafters/processengineapi/`.
 
-`CommonRestrictions.EXECUTION_ID` exists, but the C7 adapter does not honour it for message correlation. Both `CorrelationApiImpl` classes accept only `tenantId`, `withoutTenantId` and `useGlobalCorrelationKey` (emb: `correlation/CorrelationApiImpl.kt:59-63`, rem: `correlation/CorrelationApiImpl.kt:63-67`); any other key fails `ensureSupported` with `IllegalArgumentException` (api: `RestrictionAware.kt:27-28`). `messageEventReceived(name, executionId)` (6) has no path through `CorrelationApi`.
+`CommonRestrictions.EXECUTION_ID` exists, but the C7 adapter does not honour it for message correlation. Both `CorrelationApiImpl` classes accept only `tenantId`, `withoutTenantId` and `useGlobalCorrelationKey` (emb: `correlation/CorrelationApiImpl.kt:59-63`, rem: `correlation/CorrelationApiImpl.kt:63-67`); any other key fails `ensureSupported` with `IllegalArgumentException` (api: `RestrictionAware.kt:27-28`). Addressing an execution by id therefore has no path through `CorrelationApi`. Of the 6 `messageEventReceived(name, executionId)` sites, 1 finds its execution through a process variable. It can be expressed as a correlation on that variable (`Correlation.withKey(value).withVariable(name)`, api: `correlation/Correlation.kt:34-36`) with `useGlobalCorrelationKey`, which makes the adapter match a process-instance variable (emb: `correlation/CorrelationApiImpl.kt:48-49`, rem: `correlation/CorrelationApiImpl.kt:50-51`). The other 5 address the execution or process instance by id (3) or by business key and activity (2), which the adapter does not accept.
 
 The adapter honours `EXECUTION_ID` for `SendSignalCmd` (emb: `correlation/SignalApiImpl.kt:61`, rem: `correlation/SignalApiImpl.kt:65`). That call is `createSignalEvent(name).executionId(id)` (emb: `correlation/SignalApiImpl.kt:28-32`): it delivers a signal event to one execution's signal subscription, not the wait-state trigger of `runtimeService.signal(executionId)` (4). The adapter also honours `EXECUTION_ID` when matching task subscriptions (emb: `task/delivery/pull/EmbeddedPullUserTaskDelivery.kt:206`, `task/delivery/pull/EmbeddedPullServiceTaskDelivery.kt:239`; rem: `task/delivery/pull/PullUserTaskDelivery.kt:219`, `task/delivery/pull/PullServiceTaskDelivery.kt:282`).
 
 Already covered by the adapter: the docs list the supported correlation restrictions, and `executionId` is not among them (docs: `reference-c7-embedded.md:162-170`, `reference-c7-remote.md:197-205`). Not covered: the docs have no restriction table for signals.
 
-Starting at an element is expressible (`StartProcessByDefinitionAtElementCmd`, `StartProcessByMessageAtElementCmd`). The embedded adapter implements it as a start followed by a separate `createModification(...).startBeforeActivity(...)` (emb: `process/StartProcessApiImpl.kt:75-107`); the remote adapter sends `startInstructions` with the start request (rem: `process/StartProcessApiImpl.kt:88-97`). Modification of a running instance, as in the 2 `createProcessInstanceModification` sites, has no path. Instance-level variable access and cancellation have no path.
+Starting at an element is expressible (`StartProcessByDefinitionAtElementCmd`, `StartProcessByMessageAtElementCmd`). The embedded adapter implements it as a start followed by a separate `createModification(...).startBeforeActivity(...)` (emb: `process/StartProcessApiImpl.kt:75-107`); the remote adapter sends `startInstructions` with the start request (rem: `process/StartProcessApiImpl.kt:88-97`). Modification of a running instance, as in the 2 `createProcessInstanceModification` sites, has no path. Cancellation has no path. Instance-level variable access has no path of its own. The exceptions are reads made for a known user task, which the task payload covers, and a variable set just before a message, which can travel with it (note under the §3 table).
 
 ### F. Jobs, incidents, retries
 
-- `managementService`: `setJobRetries`, `executeJob`, `activateJobById`, `recalculateJobDuedate`, `getJobExceptionStacktrace` (6 sites); `createIncident / resolveIncident` (0); custom `JobRetryCmd / FoxJobRetryCmd / DefaultJobRetryCmd` subclasses (6); custom `IncidentHandler` (3); `TimerEventJobHandler` (1).
+- `managementService`: `setJobRetries`, `executeJob`, `activateJobById`, `recalculateJobDuedate`, `getJobExceptionStacktrace` (6 sites); `createIncident / resolveIncident` (0); custom `JobRetryCmd / FoxJobRetryCmd / DefaultJobRetryCmd` subclasses (6 classes); custom `IncidentHandler` (3 classes); `TimerEventJobHandler` (1 class).
 - `FailTaskCmd` covers retries for the task at hand. Operations-side job/incident handling (retry storms, bulk re-run) has no counterpart.
 
 ### G. Engine internals (`org.camunda.bpm.engine.impl.*`)
 
 - **617 imports across 176 files** (consulting) + 81 (examples). Top packages: `impl.cfg` 122, `impl.persistence` 66, `impl.bpmn` 65, `impl.pvm` 63, `impl.history` 51, `impl.interceptor` 46, `impl.util` 33, `impl.context` 28, `impl.jobexecutor` 21.
-- Concrete shapes: `ProcessEnginePlugin` / `AbstractProcessEnginePlugin` (49), `BpmnParseListener` / `AbstractBpmnParseListener` (18), custom `ActivityBehavior` (5), `CommandInterceptor` (4), `Command<T>` (3), `SessionFactory` (2), `TenantIdProvider` (4), `Context.getCommandContext()` / `Context.getProcessEngineConfiguration()` (44).
+- Concrete shapes, in classes: `ProcessEnginePlugin` / `AbstractProcessEnginePlugin` (49), `BpmnParseListener` / `AbstractBpmnParseListener` (18), custom `ActivityBehavior` (5), `CommandInterceptor` (4), `Command<T>` (3), `SessionFactory` (2), `TenantIdProvider` (4); and `Context.getCommandContext()` / `Context.getProcessEngineConfiguration()` (44 call sites).
 - Unportable by definition. Not an API concern, but a C7-exit assessment must count them: each one is a design decision, not a rewrite.
 
 ### H. CMMN
 
-- `caseService.*` 31 sites, `CaseExecutionListener` (10). Dead end on every target engine; worth a one-line "not supported, no plan" in the feature matrix.
+- `caseService.*` 31 sites, `CaseExecutionListener` (10 classes). Dead end on every target engine; worth a one-line "not supported, no plan" in the feature matrix.
 
 ### I. Delegate context reads → `TaskInformation.meta`
 
@@ -215,22 +215,25 @@ Ask: document three points:
 
 ## 3. Summary table
 
-| Area | Sites (both repos) | In API | Verdict |
+| Area | Count (both repos; call sites unless a unit is given) | In API | Verdict |
 |---|---|---|---|
 | Start / correlate / signal | 63 | yes | ports |
-| External-task worker style | 39 | yes | ports |
-| User task complete / assign / by-error | 37 | yes | ports |
+| External-task worker style | 33, plus 6 handler classes | yes | ports |
+| User task complete / assign | 26 | yes | ports |
+| BPMN error from a service task (`JavaDelegate`) | 11 | yes | ports (`CompleteTaskByErrorCmd`) |
 | Deployment, DMN evaluate | 16 | yes | ports |
-| Delegates & listeners in shared transaction | 257 classes, 73 nested engine calls | no | rewrite as workers; semantics change |
+| Delegates & listeners in shared transaction | 257 classes; 73 entry-point call sites, 85 engine calls through them, 117 engine calls in total from inside delegates | no | rewrite as workers; semantics change |
 | Queries (task, history, runtime, repository, job) | 160 | no | fewer sites than identity / authorization / filters; needs a stance |
-| History infrastructure | 14 classes | no | engine-native; document |
+| History infrastructure | 12 classes | no | engine-native; document |
 | Identity / authorization / filters | 317 | no | out of scope; document |
-| Instance lifecycle, instance variables | 34 | partial | `EXECUTION_ID` is rejected for message correlation, honoured for signals and task subscriptions (§E); document |
-| Jobs / incidents / retries (ops) | 16 | partial | `FailTaskCmd` only |
+| Instance lifecycle, instance variables | 34 | partial (note below) | `EXECUTION_ID` is rejected for message correlation, honoured for signals and task subscriptions (§E); document |
+| Jobs / incidents / retries (ops) | 6, plus 10 classes | partial | `FailTaskCmd` only |
 | Engine internals (`impl.*`) | 698 imports / 201 files | no | design work, not porting |
-| CMMN | 41 | no | dead end; state it |
+| CMMN | 31, plus 10 listener classes | no | dead end; state it |
 | Delegate context reads | 807 | partial | per-adapter meta-key tables exist but mark no key as guaranteed and omit `processInstanceId`, `businessKey`, `formKey`, `retries`, `processDefinitionVersionTag` (remote only), `reason` (§I) |
-| Variable scope / typed values | 21 | partial | document adapter behaviour |
+| Local variables, removal, existence checks (`setVariableLocal`, `getVariableLocal`, `removeVariable`, `hasVariable`) | 21 | partial | document adapter behaviour (§J) |
+
+Note on instance lifecycle: 7 of the 34 sites have an API path. In `oop2013-cookshow/.../SupplierAdapter.java`, the `messageEventReceived` call (line 47) and the `setVariable` just before it (line 46) become one `CorrelateMessageCmd`, with the variable as payload (§E). Five calls are made for a known user task, and the task delivery covers them: `UserTaskSupport.getPayload(taskId)` returns the variables visible from the task (§J), and `UserTaskSupport.getTaskInformation(taskId)` carries the task's `activityId` in its meta (§I). These are `four-eyes-advanced/.../TaskListService.java:54` (`getActiveActivityIds` of the task's execution) and `:80`, and `user-task-data-cache/.../TaskDataConfiguration.java:83`, `:84` and `:86` (variable reads). The other 27 sites have no path.
 
 ## 4. Patterns from banking codebases (anonymised, from experience — not from the two repos above)
 
@@ -247,10 +250,10 @@ Ask: document three points:
 
 1. **Complete the per-adapter meta-key tables** (§I). The adapter docs already list meta keys for user and service tasks. Still missing: the guaranteed / conditional / absent marking, and six keys (`processInstanceId`, `businessKey`, `formKey`, `retries`, `processDefinitionVersionTag`, `reason`). Highest value per line of documentation.
 2. **Stance on queries** (§B): minimal read-only API, or explicit out-of-scope.
-3. **Adapter behaviour for variables** (§J): scope, serialization, removal.
+3. **Adapter behaviour for variables** (§J). The embedded adapter's serialization is already documented (Spin / Jackson combinations). Still undocumented: the variable scope that start, correlate, signal and complete write to; the fact that local scope and removal exist only as user-task payload modification; and the remote `ValueMapper` serialization rules.
 4. **Feature matrix additions**: CMMN (not supported) and listeners (out of scope); the feature matrix in the process-engine-api README has a row for neither. For `EXECUTION_ID` (§E), the adapter docs already list the message-correlation restrictions, and `executionId` is not among them; still missing is a restriction table for signals, where the adapter honours `executionId`.
 5. Optional: a short "portability checklist" mapping C7 packages/interfaces → {API / engine-native / rewrite}. The counts above suggest where to start.
 
 ## Caveats
 
-Static grep, no runtime; snippet repositories, not production applications; counts include duplicated snippets across similar examples; C8-specific folders excluded. Happy to re-run the inventory against any codebase the maintainers prefer, or to turn the summary table into a docs page.
+Static parse of the Java sources, no runtime; snippet repositories, not production applications; counts include duplicated snippets across similar examples; C8-specific folders excluded. Happy to re-run the inventory against any codebase the maintainers prefer, or to turn the summary table into a docs page.

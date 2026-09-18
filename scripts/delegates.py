@@ -34,6 +34,7 @@ def main() -> None:
     print(row("… implementing JavaDelegate", "JavaDelegate"))
     print(row("… implementing ExecutionListener", "ExecutionListener"))
     print(row("… implementing TaskListener", "TaskListener"))
+    print(row("… implementing more than one of them", "classes_multi"))
     print(row("… of which implement an interface directly", "classes_direct"))
     print(row("abstract classes implementing one (not in headline)", "abstract"))
     print(row("anonymous classes (not in headline)", "anonymous"))
