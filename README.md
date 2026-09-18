@@ -39,8 +39,8 @@ You need git, Python 3 (tested with 3.13) and network access to github.com. The 
 
 ```sh
 # 1. Get this repository
-git clone <url-or-path-of-this-repository> portability-inventory
-cd portability-inventory
+git clone https://github.com/WilliePim/camunda7-portability-inventory.git camunda7-portability-inventory
+cd camunda7-portability-inventory
 
 # 2. Python environment with the parser packages (tree-sitter, tree-sitter-java)
 python -m venv .venv
