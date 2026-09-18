@@ -33,7 +33,7 @@ Expected result: `Tests run: 9, Failures: 3, Errors: 2` and `BUILD FAILURE`. The
 | `camunda-engine` | 7.24.0, on H2 2.3.232 in memory |
 | JDK | Java 21, which Camunda 7.24 [lists as supported](https://docs.camunda.org/manual/7.24/introduction/supported-environments/#java); recorded run on Eclipse Temurin 21.0.12.1+1 |
 
-## Running from a clean checkout
+## Running the inventory scripts
 
 You need git, Python 3 (tested with 3.13) and network access to github.com. The commands are for a POSIX shell; Git Bash works on Windows. PowerShell differences are noted below the block.
 
