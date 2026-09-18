@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="user-task-error-definitions"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:error id="rejected" name="Rejected" errorCode="REJECTED" />
+  <bpmn:process id="review_process" isExecutable="true" camunda:historyTimeToLive="P1D">
+    <bpmn:startEvent id="start" />
+    <bpmn:sequenceFlow id="to_review" sourceRef="start" targetRef="review" />
+    <bpmn:userTask id="review" name="Review document" />
+    <bpmn:sequenceFlow id="to_approved" sourceRef="review" targetRef="approved" />
+    <bpmn:endEvent id="approved" />
+    <!-- the error code and message land in process variables, which is how the lost errorMessage is observed -->
+    <bpmn:boundaryEvent id="review_rejected" attachedToRef="review">
+      <bpmn:errorEventDefinition errorRef="rejected"
+                                 camunda:errorCodeVariable="errorCode"
+                                 camunda:errorMessageVariable="errorMessage" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="to_rework" sourceRef="review_rejected" targetRef="rework" />
+    <bpmn:userTask id="rework" name="Rework document" />
+    <bpmn:sequenceFlow id="to_reworked" sourceRef="rework" targetRef="reworked" />
+    <bpmn:endEvent id="reworked" />
+  </bpmn:process>
+</bpmn:definitions>
