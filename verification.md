@@ -335,7 +335,20 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
       - `SupplierAdapter.java:46-47` (setVariable + messageEventReceived): one `CorrelateMessageCmd` with a global correlation variable;
       - `TaskListService.java:54` and `:80`, `TaskDataConfiguration.java:83`, `:84`, `:86`: calls made for a known user task, covered by `UserTaskSupport.getTaskInformation` / `getPayload` (api `task/support/UserTaskSupport.kt:56`, `:38`).
 
-      The other 27 have none: 10 instance-variable calls (other process instances, own execution inside a delegate, conditional-event triggers, an engine plugin), 4 `signal(executionId)`, 5 `messageEventReceived`, 1 `deleteProcessInstance`, 4 suspend/activate, 2 running-instance modifications, 1 `getActiveActivityIds` for a diagram. The verdict stays "partial", with a note under the §3 table.
+      The other 27 have none:
+      - 10 instance-variable calls:
+        - other process instances: `one-time-examples/counterparty-onboarding/.../CancelProcessDelegate.java:18`, `snippets/kibana-reporting/.../CompleteDecideOnFurtherFraudCheckDelegate.java:26`, `snippets/test-delegate-createinstances/.../UpdateParentInstanceCountDelegate.java:19`, `:20`;
+        - own execution inside a delegate: `multi-tenancy/schema-isolation/.../SimpleServiceTask.java:36` (examples);
+        - conditional-event triggers: `snippets/conditional-event-on-transient-variable/.../ConditionTriggerHandler.java:36`, `snippets/conditional-event-ordered-handling/.../ConditionService.java:21`, `:24`, `:26`;
+        - an engine plugin: `snippets/engine-plugin-variable-depending-history-ttl/.../RuntimeQueryRemovalTimeCalculationStrategy.java:35`;
+      - 4 `signal(executionId)`: `servicetask/service-invocation-asynchronous/.../BusinessLogic.java:54` (examples), `one-time-examples/bank-account-opening-mule/.../FoxService.java:41`, `snippets/asynchronous-service-task/.../AsynchronousServiceTask.java:86`, `snippets/inter-process-communication-ws/.../ProcessCallback.java:30`;
+      - 5 `messageEventReceived`: the by-id and by-business-key sites listed in item 21;
+      - 1 `deleteProcessInstance`: `one-time-examples/counterparty-onboarding/.../CancelProcessDelegate.java:19`;
+      - 4 suspend/activate: `snippets/camunda-migration-examples/.../ActivateProcesses.java:22`, `:25`, `.../SuspendProcesses.java:23`, `:26`;
+      - 2 running-instance modifications: `snippets/eventsubprocessresume/.../ResumeInstanceDelegate.java:16`, `snippets/generic-error-handler/.../ModifyCallingProcess.java:14`;
+      - 1 `getActiveActivityIds` for a diagram: `one-time-examples/invoice-en/.../ProcessDiagramController.java:129`.
+
+      The verdict stays "partial", with a note under the §3 table.
 
 ### Sections E, I, J (amended)
 
