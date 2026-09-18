@@ -103,6 +103,8 @@ Cloned on 2026-09-17 with `--depth 1`.
 | [bpm-crafters/process-engine-api](https://github.com/bpm-crafters/process-engine-api) | `b02569855596de4fb423dc181489e72595235503` | API reference (`api` module, version `1.8-SNAPSHOT`) |
 | [bpm-crafters/process-engine-adapters-camunda-7](https://github.com/bpm-crafters/process-engine-adapters-camunda-7) | `d2be36eca2edf24d1e1a43540cee77d9e9dffd21` | Adapter behaviour for sections E, I, J (the build pins `process-engine-api` 1.7) |
 
+The report and the issue drafts cite the adapter at `d2be36e` on `develop`; the reproducer runs the release 2026.09.1. Every cited adapter file is byte-identical in both except `engine-adapter/c7-remote-core/pom.xml`, which differs only in its parent version (`2026.09.2-SNAPSHOT` on `develop`), outside the cited lines; the process-engine-api files cited at `b025698` are byte-identical in 1.7, the API version of the release.
+
 Main sources are `.java` files under `src/main/`. Test sources and build helpers such as `.mvn/wrapper` are excluded.
 
 ## Known limitations
