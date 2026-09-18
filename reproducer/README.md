@@ -23,6 +23,17 @@ The build fails on purpose. Each bug test asserts the behaviour the API describe
 
 Every test starts a new engine (`EngineTestSupport`) and calls the adapter classes directly, without Spring: `SignalApiImpl`, `C7UserTaskCompletionApiImpl` and `StartProcessApiImpl`, each with the adapter's `EngineCommandExecutor`.
 
+## Testing a fix
+
+`-Dadapter.version` runs the tests against another published adapter release, for example `./mvnw test -Dadapter.version=2026.07.1`. For an unreleased fix, install the adapter from a clone of process-engine-adapters-camunda-7 and pass the version of that clone's root `pom.xml`:
+
+```sh
+./mvnw install -DskipTests -pl engine-adapter/c7-embedded-core -am   # in the adapter clone
+./mvnw test -Dadapter.version=2026.09.2-SNAPSHOT                     # here, with that version
+```
+
+With the three bugs fixed, the five bug tests pass and the three `observed_*` tests of issue 01 fail, because they record the behaviour of 2026.09.1.
+
 ## Tests and results on 2026.09.1
 
 | Test | Issue | Result | What it shows |
