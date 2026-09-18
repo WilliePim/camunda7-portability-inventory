@@ -12,7 +12,7 @@ Static inventory of main sources (tests excluded) in two public C7 codebases, he
 | `camunda/camunda-bpm-examples` | 124 | Official samples, broad coverage of platform integration |
 | `camunda-consulting/code` (Camunda 7 content: 1,052 files under `snippets/`, 245 under `one-time-examples/`; the C8 folder `snippets/reverse-adapter/` excluded) | 1,297 | Real-world consulting patterns, closest public thing to enterprise code |
 
-Counts are **call sites** unless a unit is given: counts of classes, import declarations or files name that unit where they appear. All counts are occurrences, not distinct features, and the consulting repo over-represents identity/authorization and platform-plugin snippets. Treat numbers as "how often this shape shows up", not as a benchmark. No customer code is included; banking patterns in the last section are from personal experience, anonymised.
+Counts are **call sites** unless a unit is given: counts of classes, import declarations or files name that unit where they appear. All counts are occurrences, not distinct features, and the consulting repo over-represents identity/authorization and platform-plugin snippets. Treat numbers as "how often this shape shows up", not as a benchmark. No customer code is included.
 
 API surface used as reference: `DeploymentApi`, `EvaluateDecisionApi`, `StartProcessApi`, `CorrelationApi`, `SignalApi`, `TaskSubscriptionApi`, `ServiceTaskCompletionApi`, `UserTaskCompletionApi`, `UserTaskModificationApi`, `UserTaskSupport`, `CommonRestrictions`.
 
@@ -235,9 +235,7 @@ Ask: document three points:
 
 Note on instance lifecycle: 7 of the 34 sites have an API path. In `oop2013-cookshow/.../SupplierAdapter.java`, the `messageEventReceived` call (line 47) and the `setVariable` just before it (line 46) become one `CorrelateMessageCmd`, with the variable as payload (§E). Five calls are made for a known user task, and the task delivery covers them: `UserTaskSupport.getPayload(taskId)` returns the variables visible from the task (§J), and `UserTaskSupport.getTaskInformation(taskId)` carries the task's `activityId` in its meta (§I). These are `four-eyes-advanced/.../TaskListService.java:54` (`getActiveActivityIds` of the task's execution) and `:80`, and `user-task-data-cache/.../TaskDataConfiguration.java:83`, `:84` and `:86` (variable reads). The other 27 sites have no path.
 
-## 4. Patterns from banking codebases (anonymised, from experience — not from the two repos above)
-
-## About this report
+## 4. About this report
 
 I'm Simone, a Java/Spring engineer. For the past years I've worked on
 Camunda 7 running in production inside Italian banking systems — the
