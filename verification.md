@@ -350,7 +350,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 
 ### Sections 4–5 and M (not amended)
 
-24. **§5 ask 4 "execution-targeted correlation via `EXECUTION_ID` (supported?)".** Answer: not supported for message correlation, supported for signals (§E). Amended: ask 4 now asks only for the CMMN and listener rows missing from the API README feature matrix and for a signal restriction table; ask 1 now asks only for the guaranteed / conditional marking and the six keys missing from the existing adapter meta-key tables.
+24. **§5 ask 4 "execution-targeted correlation via `EXECUTION_ID` (supported?)".** Answer: not supported for message correlation, supported for signals (§E). Amended: ask 4 now asks only for the CMMN and listener rows missing from the API README feature matrix and for a signal restriction table; ask 1 now asks only for the guaranteed / conditional marking and the six keys missing from the existing adapter meta-key tables; ask 3 acknowledges the embedded serialization docs and asks only for scope, removal and the remote `ValueMapper` rules.
 25. **§M "form keys may or may not appear in task meta".** `formKey` is written for user tasks by both adapters, conditional on a non-null value (`emb: task/delivery/TaskInformationExtensions.kt:26`, `rem: task/delivery/TaskInformationExtensions.kt:45`). Amended: §M now states this coverage, the missing `formKey` row in the adapter docs tables, and which form calls have no counterpart.
 
 ## 4. Gaps in report.md the adapter already covers

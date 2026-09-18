@@ -250,7 +250,7 @@ Note on instance lifecycle: 7 of the 34 sites have an API path. In `oop2013-cook
 
 1. **Complete the per-adapter meta-key tables** (§I). The adapter docs already list meta keys for user and service tasks. Still missing: the guaranteed / conditional / absent marking, and six keys (`processInstanceId`, `businessKey`, `formKey`, `retries`, `processDefinitionVersionTag`, `reason`). Highest value per line of documentation.
 2. **Stance on queries** (§B): minimal read-only API, or explicit out-of-scope.
-3. **Adapter behaviour for variables** (§J): scope, serialization, removal.
+3. **Adapter behaviour for variables** (§J). The embedded adapter's serialization is already documented (Spin / Jackson combinations). Still undocumented: the variable scope that start, correlate, signal and complete write to; the fact that local scope and removal exist only as user-task payload modification; and the remote `ValueMapper` serialization rules.
 4. **Feature matrix additions**: CMMN (not supported) and listeners (out of scope); the feature matrix in the process-engine-api README has a row for neither. For `EXECUTION_ID` (§E), the adapter docs already list the message-correlation restrictions, and `executionId` is not among them; still missing is a restriction table for signals, where the adapter honours `executionId`.
 5. Optional: a short "portability checklist" mapping C7 packages/interfaces → {API / engine-native / rewrite}. The counts above suggest where to start.
 
