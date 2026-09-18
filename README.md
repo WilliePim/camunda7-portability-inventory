@@ -18,11 +18,11 @@ The three bugs in `issues/` are reproduced by the Maven project in `reproducer/`
 ```sh
 git clone https://github.com/WilliePim/camunda7-portability-inventory.git camunda7-portability-inventory
 cd camunda7-portability-inventory/reproducer
-export JAVA_HOME="$HOME/.jdks/jdk-21.0.12.1+1"   # the Temurin 21 of the recorded run; use the path of your JDK 21
+export JAVA_HOME=/path/to/jdk-21   # replace with the folder of your JDK 21
 ./mvnw test
 ```
 
-Maven runs on the JDK in `JAVA_HOME` and falls back to the first `java` on the `PATH` only when `JAVA_HOME` is unset, which can be a different JDK; set it explicitly. On macOS: `export JAVA_HOME=$(/usr/libexec/java_home -v 21)`. In PowerShell: `$env:JAVA_HOME = "$HOME\.jdks\jdk-21.0.12.1+1"`, then `.\mvnw.cmd test`.
+Maven runs on the JDK in `JAVA_HOME` and falls back to the first `java` on the `PATH` only when `JAVA_HOME` is unset, which can be a different JDK; set it explicitly. To find the path of your JDK 21, the folder that contains `bin/java`: on macOS `/usr/libexec/java_home -v 21` prints it, on Linux JDKs are usually folders under `/usr/lib/jvm/`, and in PowerShell `Get-ChildItem 'C:\Program Files\Eclipse Adoptium', 'C:\Program Files\Java' -Directory -ErrorAction SilentlyContinue` lists the usual install folders. In PowerShell, set it with `$env:JAVA_HOME = 'C:\path\to\jdk-21'` and run `.\mvnw.cmd test`.
 
 Expected result: `Tests run: 9, Failures: 3, Errors: 2` and `BUILD FAILURE`. The build fails on purpose. The five bug tests assert the behaviour the API describes, so they fail while the bugs exist; the four `observed_*` tests record what the adapter and the engine do, and pass. Full output, with stack traces, is in `target/surefire-reports/`; the result of each test is in [reproducer/README.md](reproducer/README.md).
 
