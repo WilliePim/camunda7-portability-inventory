@@ -1,6 +1,6 @@
 # Camunda 7 → process-engine-api portability inventory
 
-This repository verifies and hosts a static inventory of how open-source Camunda 7 code uses the engine, compared against the [process-engine-api](https://github.com/bpm-crafters/process-engine-api).
+This repository verifies and hosts a static inventory of how open-source Camunda 7 code uses the engine, compared against the [process-engine-api](https://github.com/bpm-crafters/process-engine-api). It also contains a reproducer for three bugs in the embedded Camunda 7 adapter (`c7-embedded-core` in [process-engine-adapters-camunda-7](https://github.com/bpm-crafters/process-engine-adapters-camunda-7)): the bug reports are in [issues/](issues/), the failing tests in [reproducer/](reproducer/).
 
 | File | Content |
 |---|---|
