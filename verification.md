@@ -28,6 +28,8 @@ Engine implementation classes (`TaskServiceImpl`, …) count as their service in
 |---|---|---|---:|---:|---:|---:|---:|---|
 | Method | camunda-bpm-examples main .java files | examples | 122 | 124 | +2 | 124 |  | `inventory.py m.files.examples` |
 | Method | camunda-consulting/code main .java files (C7 only) | consulting | 1,298 | 1297 | -1 |  | 1297 | `inventory.py m.files.consulting` |
+| Method | … under snippets/ | consulting | — | 1052 |  |  | 1052 | `inventory.py m.files.consulting.snippets` |
+| Method | … under one-time-examples/ | consulting | — | 245 |  |  | 245 | `inventory.py m.files.consulting.oneTime` |
 | 1 | runtimeService.startProcessInstanceByKey / ById | both | 18 | 19 | +1 | 6 | 13 | `inventory.py 1.start.direct` |
 | 1 | … chained | both | 51 | 27 | -24 | 6 | 21 | `inventory.py 1.start.chained` |
 | 1 | runtimeService.startProcessInstanceByMessage | both | 2 | 2 | +0 | 1 | 1 | `inventory.py 1.startByMessage` |
@@ -264,7 +266,7 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
    - 2 of the 9 hits for `runtimeService.correlateMessage / createMessageCorrelation` are commented out.
    - 3 chained correlations split across lines were not matched.
 
-   **Correction:** all counts replaced by parser-based values (§1 table). The Method sentence itself is not amended.
+   **Correction:** all counts replaced by parser-based values (§1 table). The Method and Caveats sections now describe the parse, keep the grep contrast, state the consulting corpus composition (`m.files.consulting.snippets` 1,052, `m.files.consulting.oneTime` 245) and name the unit of every count that is not a call-site count.
 
 ### Section 1
 

@@ -96,9 +96,11 @@ class Delegates:
 @dataclass
 class Files:
     rule: str  # main | draft
+    prefix: str = ""  # only files under this top-level folder
 
     def describe(self) -> str:
-        return "`src/main/` .java files, C8 folders excluded" if self.rule == "main" else "draft rule: .java paths without `/test/`"
+        base = "`src/main/` .java files, C8 folders excluded" if self.rule == "main" else "draft rule: .java paths without `/test/`"
+        return f"{base}, under `{self.prefix}`" if self.prefix else base
 
 
 @dataclass
@@ -129,6 +131,8 @@ SPECS: list[Spec] = [
     # ---------------------------------------------------------------- method
     Spec("m.files.examples", "Method", "camunda-bpm-examples main .java files", "122", Files("main"), "examples"),
     Spec("m.files.consulting", "Method", "camunda-consulting/code main .java files (C7 only)", "1,298", Files("main"), "consulting"),
+    Spec("m.files.consulting.snippets", "Method", "… under snippets/", "—", Files("main", "snippets/"), "consulting"),
+    Spec("m.files.consulting.oneTime", "Method", "… under one-time-examples/", "—", Files("main", "one-time-examples/"), "consulting"),
     # ------------------------------------------------------------ section 1
     Spec("1.start.direct", "1", "runtimeService.startProcessInstanceByKey / ById", "18",
          Calls({RS}, "startProcessInstanceBy(Key|Id)", "direct", hint=hint("runtimeService"))),
@@ -305,7 +309,8 @@ def measure(spec: Spec, ix: CorpusIndex, scopes: DelegateScopes, delegate_summar
     how = spec.how
     emit = log.append if log is not None else (lambda _line: None)
     if isinstance(how, Files):
-        return len(ix.corpus.main_java() if how.rule == "main" else ix.corpus.draft_rule_java()), None
+        files = ix.corpus.main_java() if how.rule == "main" else ix.corpus.draft_rule_java()
+        return sum(1 for f in files if f.startswith(how.prefix)), None
     if isinstance(how, Delegates):
         key = how.key
         if "*" in key:  # wildcard over method names: method:Service.prefix*:entry

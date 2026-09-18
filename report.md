@@ -5,14 +5,14 @@
 
 ## Method
 
-Static inventory (grep of call sites, main sources only, tests excluded) on two public C7 codebases, held against `process-engine-api` `api` module (HEAD, September 2026):
+Static inventory of main sources (tests excluded) in two public C7 codebases, held against `process-engine-api` `api` module (HEAD, September 2026). The Java sources are parsed with tree-sitter, and a call is counted only when its receiver resolves to the Camunda type in question through declarations and imports; comments are ignored. Plain grep over the same sources reproduces the old, uncorrected numbers instead: it counts commented-out code and misses calls split across lines. For example, 35 of its 56 hits for chained `startProcessInstanceBy(Key|Id)` calls are in comments, and the parse counts 27 such calls.
 
 | Codebase | Main `.java` files | Why |
 |---|---|---|
 | `camunda/camunda-bpm-examples` | 124 | Official samples, broad coverage of platform integration |
-| `camunda-consulting/code` (C7 snippets only) | 1,297 | Real-world consulting patterns, closest public thing to enterprise code |
+| `camunda-consulting/code` (Camunda 7 content: 1,052 files under `snippets/`, 245 under `one-time-examples/`; the C8 folder `snippets/reverse-adapter/` excluded) | 1,297 | Real-world consulting patterns, closest public thing to enterprise code |
 
-Counts are **call sites**, not distinct features, and the consulting repo over-represents identity/authorization and platform-plugin snippets. Treat numbers as "how often this shape shows up", not as a benchmark. No customer code is included; banking patterns in the last section are from personal experience, anonymised.
+Counts are **call sites** unless a unit is given: counts of classes, import declarations or files name that unit where they appear. All counts are occurrences, not distinct features, and the consulting repo over-represents identity/authorization and platform-plugin snippets. Treat numbers as "how often this shape shows up", not as a benchmark. No customer code is included; banking patterns in the last section are from personal experience, anonymised.
 
 API surface used as reference: `DeploymentApi`, `EvaluateDecisionApi`, `StartProcessApi`, `CorrelationApi`, `SignalApi`, `TaskSubscriptionApi`, `ServiceTaskCompletionApi`, `UserTaskCompletionApi`, `UserTaskModificationApi`, `UserTaskSupport`, `CommonRestrictions`.
 
@@ -26,7 +26,7 @@ API surface used as reference: `DeploymentApi`, `EvaluateDecisionApi`, `StartPro
 | `runtimeService.signalEventReceived` | 1 | `SendSignalCmd` |
 | `externalTaskService.complete` | 24 | `ServiceTaskCompletionApi.completeTask` |
 | `externalTaskService.handleFailure` | 9 | `FailTaskCmd` (retries + backoff) |
-| `ExternalTaskHandler` implementations | 6 | `TaskSubscriptionApi` + `TaskHandler` |
+| `ExternalTaskHandler` implementations | 6 classes | `TaskSubscriptionApi` + `TaskHandler` |
 | `taskService.complete` | 3 + 12 chained | `UserTaskCompletionApi.completeTask` |
 | `taskService.claim / setAssignee` | 11 | `ChangeAssignmentModifyTaskCmd` |
 | `throw new BpmnError` from a *task* | 11 | `CompleteTaskByErrorCmd` |
@@ -39,7 +39,7 @@ The external-task style of C7 (`ExternalTaskHandler`, `complete`, `handleFailure
 
 ### A. Business logic inside the engine transaction (`JavaDelegate`, `ExecutionListener`, `TaskListener`)
 
-- **231 delegate/listener classes** (185 `JavaDelegate`, 25 `ExecutionListener`, 22 `TaskListener`) in the consulting repo, 24 + 2 in the examples.
+- **231 delegate/listener classes** (185 `JavaDelegate`, 25 `ExecutionListener`, 22 `TaskListener`) in the consulting repo, 24 + 2 classes in the examples.
 - The API has no in-transaction hook: work is done by a subscriber *outside* the engine transaction and completed via a future.
 - **47 of the 231 delegate/listener classes call engine services from inside the delegate** through four entry points (72 sites total): `DelegateExecution.getProcessEngineServices()` (57), `DelegateTask.getProcessEngineServices()` (10), `Context.getProcessEngineConfiguration()` (3), `Context.getCommandContext()` (2). Engine calls reached through them include `startProcessInstanceByKey` (4), `correlateMessage` (2), `taskService.complete` (5), `taskService.createTaskQuery` (4), `historyService.create*Query` (13), `repositoryService.*` (9), `identityService.*` (17), `caseService.*` (4).
 - Some of these calls exist in the API (start, correlate) but the **semantics change**: in C7 they run in the same transaction as the calling delegate (atomic, rolled back together); in the API they are independent async commands. This is the pattern that decides the effort of a migration, and it is invisible to BPMN-level analysers.
@@ -62,7 +62,7 @@ Ask: either a minimal read-only `TaskQueryApi` / `ProcessInstanceQueryApi` (by b
 
 ### C. History and audit
 
-- 38 history query sites (above) plus **custom history infrastructure**: `HistoryEventHandler` (4), `DbHistoryEventHandler` subclasses (2), custom `HistoryLevel` (4), `HistoryEventProducer` (2), `DynamicRemovalTimeCalculationStrategy` (2).
+- 38 history query sites (above) plus **custom history infrastructure**, in classes: `HistoryEventHandler` (4), `DbHistoryEventHandler` subclasses (2), custom `HistoryLevel` (4), `HistoryEventProducer` (2), `DynamicRemovalTimeCalculationStrategy` (2).
 - Nothing in the API touches history. In regulated environments (banking) history is a compliance artefact, not a nice-to-have; C8's history model is also different.
 
 Ask: document that history is engine-native and that audit requirements must be met by the application (event sourcing / outbox from workers), not by the API.
@@ -96,18 +96,18 @@ Starting at an element is expressible (`StartProcessByDefinitionAtElementCmd`, `
 
 ### F. Jobs, incidents, retries
 
-- `managementService`: `setJobRetries`, `executeJob`, `activateJobById`, `recalculateJobDuedate`, `getJobExceptionStacktrace` (6 sites); `createIncident / resolveIncident` (0); custom `JobRetryCmd / FoxJobRetryCmd / DefaultJobRetryCmd` subclasses (6); custom `IncidentHandler` (3); `TimerEventJobHandler` (1).
+- `managementService`: `setJobRetries`, `executeJob`, `activateJobById`, `recalculateJobDuedate`, `getJobExceptionStacktrace` (6 sites); `createIncident / resolveIncident` (0); custom `JobRetryCmd / FoxJobRetryCmd / DefaultJobRetryCmd` subclasses (6 classes); custom `IncidentHandler` (3 classes); `TimerEventJobHandler` (1 class).
 - `FailTaskCmd` covers retries for the task at hand. Operations-side job/incident handling (retry storms, bulk re-run) has no counterpart.
 
 ### G. Engine internals (`org.camunda.bpm.engine.impl.*`)
 
 - **617 imports across 176 files** (consulting) + 81 (examples). Top packages: `impl.cfg` 122, `impl.persistence` 66, `impl.bpmn` 65, `impl.pvm` 63, `impl.history` 51, `impl.interceptor` 46, `impl.util` 33, `impl.context` 28, `impl.jobexecutor` 21.
-- Concrete shapes: `ProcessEnginePlugin` / `AbstractProcessEnginePlugin` (49), `BpmnParseListener` / `AbstractBpmnParseListener` (18), custom `ActivityBehavior` (5), `CommandInterceptor` (4), `Command<T>` (3), `SessionFactory` (2), `TenantIdProvider` (4), `Context.getCommandContext()` / `Context.getProcessEngineConfiguration()` (44).
+- Concrete shapes, in classes: `ProcessEnginePlugin` / `AbstractProcessEnginePlugin` (49), `BpmnParseListener` / `AbstractBpmnParseListener` (18), custom `ActivityBehavior` (5), `CommandInterceptor` (4), `Command<T>` (3), `SessionFactory` (2), `TenantIdProvider` (4); and `Context.getCommandContext()` / `Context.getProcessEngineConfiguration()` (44 call sites).
 - Unportable by definition. Not an API concern, but a C7-exit assessment must count them: each one is a design decision, not a rewrite.
 
 ### H. CMMN
 
-- `caseService.*` 31 sites, `CaseExecutionListener` (10). Dead end on every target engine; worth a one-line "not supported, no plan" in the feature matrix.
+- `caseService.*` 31 sites, `CaseExecutionListener` (10 classes). Dead end on every target engine; worth a one-line "not supported, no plan" in the feature matrix.
 
 ### I. Delegate context reads → `TaskInformation.meta`
 
@@ -215,7 +215,7 @@ Ask: document three points:
 
 ## 3. Summary table
 
-| Area | Sites (both repos) | In API | Verdict |
+| Area | Count (both repos; call sites unless a unit is given) | In API | Verdict |
 |---|---|---|---|
 | Start / correlate / signal | 63 | yes | ports |
 | External-task worker style | 39 | yes | ports |
@@ -253,4 +253,4 @@ Ask: document three points:
 
 ## Caveats
 
-Static grep, no runtime; snippet repositories, not production applications; counts include duplicated snippets across similar examples; C8-specific folders excluded. Happy to re-run the inventory against any codebase the maintainers prefer, or to turn the summary table into a docs page.
+Static parse of the Java sources, no runtime; snippet repositories, not production applications; counts include duplicated snippets across similar examples; C8-specific folders excluded. Happy to re-run the inventory against any codebase the maintainers prefer, or to turn the summary table into a docs page.
