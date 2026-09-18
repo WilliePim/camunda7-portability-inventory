@@ -6,7 +6,7 @@ This repository contains a static inventory of how two open-source Camunda 7 cod
 |---|---|
 | [report.md](report.md) | Standalone field report: Camunda 7 engine usage counted in two open-source codebases and held against process-engine-api, with what maps, what does not, a summary table, and documentation asks for the maintainers of the API and its Camunda 7 adapter (section 5). It files no bugs; those are in `issues/`. |
 | [verification.md](verification.md) | Every count in `report.md`: reported vs measured, delta, method. Reported is the value in the first draft of the report (commit `653cdf2`); measured is what the scripts count now. Also: claims corrected, gaps the Camunda 7 adapter already covers, open questions. |
-| [issues/](issues/) | Drafts of three bug reports for [process-engine-adapters-camunda-7](https://github.com/bpm-crafters/process-engine-adapters-camunda-7), all in `c7-embedded-core`, written to that repository's bug template with the reproducer's results. |
+| [issues/](issues/) | The three bug reports, as filed on the adapter repository: [#240](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/issues/240) (signal tenant restrictions), [#241](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/issues/241) (BPMN error from a user task), [#242](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/issues/242) (process definition key in meta). Each has a failing test in `reproducer/`. |
 | [reproducer/](reproducer/) | Maven project that runs the embedded adapter on an in-memory Camunda 7 engine, with one failing test per bug in `issues/` ([reproducer/README.md](reproducer/README.md)). |
 | `scripts/` | Everything used to produce the numbers and citations. Runnable from the repository root. |
 | `external/` | Clones of the analysed repositories (git-ignored, created by `scripts/clone.py`). |
@@ -100,7 +100,7 @@ Cloned on 2026-09-17 with `--depth 1`.
 | [bpm-crafters/process-engine-api](https://github.com/bpm-crafters/process-engine-api) | `b02569855596de4fb423dc181489e72595235503` | API reference (`api` module, version `1.8-SNAPSHOT`) |
 | [bpm-crafters/process-engine-adapters-camunda-7](https://github.com/bpm-crafters/process-engine-adapters-camunda-7) | `d2be36eca2edf24d1e1a43540cee77d9e9dffd21` | Adapter behaviour for sections E, I, J and M, all in section 2 of `report.md` (the build pins `process-engine-api` 1.7) |
 
-The report and the issue drafts cite the adapter at `d2be36e` on `develop`; the reproducer runs the release 2026.09.1. Every cited adapter file is byte-identical in both except `engine-adapter/c7-remote-core/pom.xml`, which differs only in its parent version (`2026.09.2-SNAPSHOT` on `develop`), outside the cited lines; the process-engine-api files cited at `b025698` are byte-identical in 1.7, the API version of the release.
+The report and the three filed issues cite the adapter at `d2be36e` on `develop`; the reproducer runs the release 2026.09.1. Every cited adapter file is byte-identical in both except `engine-adapter/c7-remote-core/pom.xml`, which differs only in its parent version (`2026.09.2-SNAPSHOT` on `develop`), outside the cited lines; the process-engine-api files cited at `b025698` are byte-identical in 1.7, the API version of the release.
 
 Main sources are `.java` files under `src/main/`. Test sources and build helpers such as `.mvn/wrapper` are excluded.
 
