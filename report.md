@@ -92,7 +92,7 @@ The adapter honours `EXECUTION_ID` for `SendSignalCmd` (emb: `correlation/Signal
 
 Already covered by the adapter: the docs list the supported correlation restrictions, and `executionId` is not among them (docs: `reference-c7-embedded.md:162-170`, `reference-c7-remote.md:197-205`). Not covered: the docs have no restriction table for signals.
 
-Starting at an element is expressible (`StartProcessByDefinitionAtElementCmd`, `StartProcessByMessageAtElementCmd`). The embedded adapter implements it as a start followed by a separate `createModification(...).startBeforeActivity(...)` (emb: `process/StartProcessApiImpl.kt:75-107`); the remote adapter sends `startInstructions` with the start request (rem: `process/StartProcessApiImpl.kt:88-97`). Modification of a running instance, as in the 2 `createProcessInstanceModification` sites, has no path. Instance-level variable access and cancellation have no path.
+Starting at an element is expressible (`StartProcessByDefinitionAtElementCmd`, `StartProcessByMessageAtElementCmd`). The embedded adapter implements it as a start followed by a separate `createModification(...).startBeforeActivity(...)` (emb: `process/StartProcessApiImpl.kt:75-107`); the remote adapter sends `startInstructions` with the start request (rem: `process/StartProcessApiImpl.kt:88-97`). Modification of a running instance, as in the 2 `createProcessInstanceModification` sites, has no path. Cancellation has no path. Instance-level variable access has no path of its own. The exceptions are reads made for a known user task, which the task payload covers, and a variable set just before a message, which can travel with it (note under the §3 table).
 
 ### F. Jobs, incidents, retries
 
@@ -225,12 +225,14 @@ Ask: document three points:
 | Queries (task, history, runtime, repository, job) | 160 | no | fewer sites than identity / authorization / filters; needs a stance |
 | History infrastructure | 12 classes | no | engine-native; document |
 | Identity / authorization / filters | 317 | no | out of scope; document |
-| Instance lifecycle, instance variables | 34 | partial | `EXECUTION_ID` is rejected for message correlation, honoured for signals and task subscriptions (§E); document |
+| Instance lifecycle, instance variables | 34 | partial (note below) | `EXECUTION_ID` is rejected for message correlation, honoured for signals and task subscriptions (§E); document |
 | Jobs / incidents / retries (ops) | 16 | partial | `FailTaskCmd` only |
 | Engine internals (`impl.*`) | 698 imports / 201 files | no | design work, not porting |
 | CMMN | 41 | no | dead end; state it |
 | Delegate context reads | 807 | partial | per-adapter meta-key tables exist but mark no key as guaranteed and omit `processInstanceId`, `businessKey`, `formKey`, `retries`, `processDefinitionVersionTag` (remote only), `reason` (§I) |
 | Variable scope / typed values | 21 | partial | document adapter behaviour |
+
+Note on instance lifecycle: 7 of the 34 sites have an API path. In `oop2013-cookshow/.../SupplierAdapter.java`, the `messageEventReceived` call (line 47) and the `setVariable` just before it (line 46) become one `CorrelateMessageCmd`, with the variable as payload (§E). Five calls are made for a known user task, and the task delivery covers them: `UserTaskSupport.getPayload(taskId)` returns the variables visible from the task (§J), and `UserTaskSupport.getTaskInformation(taskId)` carries the task's `activityId` in its meta (§I). These are `four-eyes-advanced/.../TaskListService.java:54` (`getActiveActivityIds` of the task's execution) and `:80`, and `user-task-data-cache/.../TaskDataConfiguration.java:83`, `:84` and `:86` (variable reads). The other 27 sites have no path.
 
 ## 4. Patterns from banking codebases (anonymised, from experience — not from the two repos above)
 

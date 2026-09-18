@@ -327,6 +327,11 @@ Each item states the problem, the evidence, and the correction applied. "Not ame
 20. **Verdicts contradicted by §E and §I (since amended in §3):**
     - "`EXECUTION_ID` may cover part": the adapter rejects `EXECUTION_ID` for message correlation and honours it only for signals and task subscriptions.
     - "meta keys undocumented": the adapter docs contain meta-key tables.
+    - "Instance lifecycle, instance variables | 34 | partial": checked site by site (`inventory.py --explain 2E.*`). 7 of the 34 have an API path:
+      - `SupplierAdapter.java:46-47` (setVariable + messageEventReceived): one `CorrelateMessageCmd` with a global correlation variable;
+      - `TaskListService.java:54` and `:80`, `TaskDataConfiguration.java:83`, `:84`, `:86`: calls made for a known user task, covered by `UserTaskSupport.getTaskInformation` / `getPayload` (api `task/support/UserTaskSupport.kt:56`, `:38`).
+
+      The other 27 have none: 10 instance-variable calls (other process instances, own execution inside a delegate, conditional-event triggers, an engine plugin), 4 `signal(executionId)`, 5 `messageEventReceived`, 1 `deleteProcessInstance`, 4 suspend/activate, 2 running-instance modifications, 1 `getActiveActivityIds` for a diagram. The verdict stays "partial", with a note under the §3 table.
 
 ### Sections E, I, J (amended)
 
