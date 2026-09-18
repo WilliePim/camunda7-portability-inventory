@@ -4,7 +4,7 @@ This repository verifies and hosts a static inventory of how open-source Camunda
 
 | File | Content |
 |---|---|
-| [report.md](report.md) | The inventory, written as an issue for the process-engine-api maintainers. Counts corrected and sections E, I, J amended from the verification. |
+| [report.md](report.md) | Standalone field report: Camunda 7 engine usage counted in two open-source codebases and held against process-engine-api, with what maps, what does not, a summary table, and documentation asks for the maintainers of the API and its Camunda 7 adapter (section 5). It files no bugs; those are in `issues/`. |
 | [verification.md](verification.md) | Every count in `report.md`: reported vs measured, delta, method. Also: claims corrected, gaps the Camunda 7 adapter already covers, open questions. |
 | [issues/](issues/) | Drafts of three bug reports for [process-engine-adapters-camunda-7](https://github.com/bpm-crafters/process-engine-adapters-camunda-7), all in `c7-embedded-core`, written to that repository's bug template with the reproducer's results. |
 | [reproducer/](reproducer/) | Maven project that runs the embedded adapter on an in-memory Camunda 7 engine, with one failing test per bug in `issues/` ([reproducer/README.md](reproducer/README.md)). |
