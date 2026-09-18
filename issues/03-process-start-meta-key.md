@@ -1,13 +1,13 @@
 # Embedded StartProcessApiImpl returns the process definition id as processDefinitionKey
 
-In `c7-embedded-core`, `ProcessInstance.toProcessInformation()` stores `processDefinitionId` under the `processDefinitionKey` meta key ([StartProcessApiImpl.kt#L126](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/process/StartProcessApiImpl.kt#L126)). The `ProcessInformation` returned by `startProcess` therefore has the definition id under both `processDefinitionKey` and `processDefinitionId`, while the remote adapter returns the definition key. Code that reads `processDefinitionKey` gets a different value depending on which adapter is used.
+In `c7-embedded-core`, `ProcessInstance.toProcessInformation()` stores `processDefinitionId` under the `processDefinitionKey` meta key ([StartProcessApiImpl.kt#L126](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/engine-adapter/c7-embedded-core/src/main/kotlin/dev/bpmcrafters/processengineapi/adapter/c7/embedded/process/StartProcessApiImpl.kt#L126)). The `ProcessInformation` returned by `startProcess` therefore has the definition id under both `processDefinitionKey` and `processDefinitionId`. The remote adapter sets `processDefinitionKey` from the definition key (see Expected behaviour), so code that reads `processDefinitionKey` gets a different value depending on which adapter is used.
 
 ### Steps to reproduce
 
-* Library version: process-engine-adapters-camunda-7 commit `d2be36e`, the latest on `develop` as of 2026-09-17; module `c7-embedded-core`; process-engine-api 1.7 (the version set in the adapter's `pom.xml`)
-* JDK version: not run; the behaviour below is read from the source at the commit above
-* Operating system: not run
-* Complete executable reproducer: none; the call below shows the case
+* Library version: `process-engine-adapter-camunda-platform-c7-embedded-core` 2026.09.1 (latest release), process-engine-api 1.7, Camunda 7.24.0. The line links point to commit `d2be36e` on `develop` for the adapter and `b025698` for process-engine-api; every linked file is identical in 2026.09.1 and 1.7.
+* JDK version: Oracle JDK 19.0.2 (build 19.0.2+7-44); the reproducer compiles for Java 17
+* Operating system: Windows 10 Pro, build 10.0.19045.6466
+* Complete executable reproducer: `reproducer/`, a Maven project with an embedded engine on in-memory H2 (link to follow when published). Run `./mvnw test -Dtest=Bug03ProcessDefinitionKeyMetaTest`.
 * Steps: deploy a process with the key `approval_process`, then start it:
 
 ```kotlin
@@ -18,14 +18,14 @@ val info = startProcessApi.startProcess(
   )
 ).get()
 
-info.meta[CommonRestrictions.PROCESS_DEFINITION_KEY] // returns the definition id, not "approval_process"
+info.meta[CommonRestrictions.PROCESS_DEFINITION_KEY] // "approval_process:1:3" in the reproducer: the definition id, not "approval_process"
 ```
 
-Starting by message with `StartProcessByMessageCmd` gives the same result, because both paths use `toProcessInformation` (lines 49, 55 and 72).
+The reproducer shows the same result when the process is started by message with `StartProcessByMessageCmd`; both paths use `toProcessInformation` (lines 49, 55 and 72).
 
 ### Expected behaviour
 
-`processDefinitionKey` holds the BPMN process id (`approval_process`), and `processDefinitionId` holds the id of the deployed definition (for example `approval_process:912834729348`). Three sources agree on this:
+`processDefinitionKey` holds the BPMN process id (`approval_process`), and `processDefinitionId` holds the id of the deployed definition (`approval_process:1:3` in the reproducer). Three sources agree on this:
 
 - the constants in `CommonRestrictions` ([CommonRestrictions.kt#L24-L37](https://github.com/bpm-crafters/process-engine-api/blob/b02569855596de4fb423dc181489e72595235503/api/src/main/kotlin/dev/bpmcrafters/processengineapi/CommonRestrictions.kt#L24-L37));
 - the examples in the adapter docs ([reference-c7-embedded.md#L186-L187](https://github.com/bpm-crafters/process-engine-adapters-camunda-7/blob/d2be36eca2edf24d1e1a43540cee77d9e9dffd21/docs/reference-c7-embedded.md?plain=1#L186-L187));
@@ -33,7 +33,14 @@ Starting by message with `StartProcessByMessageCmd` gives the same result, becau
 
 ### Actual behaviour
 
-Both keys contain the definition id:
+In the reproducer, both keys contain the definition id, for a start by definition key and for a start by message. Both tests fail with:
+
+```
+org.opentest4j.AssertionFailedError: meta[processDefinitionKey] is the key ==> expected: <approval_process> but was: <approval_process:1:3>
+org.opentest4j.AssertionFailedError: meta[processDefinitionKey] is not the definition id approval_process:1:3 ==> expected: not equal but was: <approval_process:1:3>
+```
+
+`meta[processDefinitionId]` is `approval_process:1:3` as well. The source sets both keys from the same property:
 
 ```kotlin
 CommonRestrictions.PROCESS_DEFINITION_KEY to this.processDefinitionId,   // line 126
@@ -41,4 +48,4 @@ CommonRestrictions.PROCESS_DEFINITION_KEY to this.processDefinitionId,   // line
 CommonRestrictions.PROCESS_DEFINITION_ID to this.processDefinitionId,    // line 130
 ```
 
-The start-at-element paths read the definition id back from the `processDefinitionKey` entry and pass it to `runtimeService.createModification(...)` (lines 84-85 and 101-102). A fix on line 126 also needs to change those lines to use `PROCESS_DEFINITION_ID`. No embedded test checks the meta of a started process instance.
+The start-at-element paths read the definition id back from the `processDefinitionKey` entry and pass it to `runtimeService.createModification(...)` (lines 84-85 and 101-102). A fix on line 126 also needs to change those lines to use `PROCESS_DEFINITION_ID`. The fix changes the value that existing callers of the embedded adapter receive under `processDefinitionKey`, from the definition id to the definition key. No embedded test checks the meta of a started process instance.
