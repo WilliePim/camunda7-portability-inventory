@@ -29,7 +29,7 @@ API surface used as reference: `DeploymentApi`, `EvaluateDecisionApi`, `StartPro
 | `ExternalTaskHandler` implementations | 6 classes | `TaskSubscriptionApi` + `TaskHandler` |
 | `taskService.complete` | 3 + 12 chained | `UserTaskCompletionApi.completeTask` |
 | `taskService.claim / setAssignee` | 11 | `ChangeAssignmentModifyTaskCmd` |
-| `throw new BpmnError` from a *task* | 11 | `CompleteTaskByErrorCmd` |
+| `throw new BpmnError` from a *service task* (`JavaDelegate`) | 11 | `CompleteTaskByErrorCmd` |
 | `repositoryService.createDeployment` | 9 | `DeployBundleCommand` |
 | DMN `decisionService` / `DmnEngine.evaluate` | 7 | `EvaluateDecisionApi` |
 
@@ -218,19 +218,20 @@ Ask: document three points:
 | Area | Count (both repos; call sites unless a unit is given) | In API | Verdict |
 |---|---|---|---|
 | Start / correlate / signal | 63 | yes | ports |
-| External-task worker style | 39 | yes | ports |
-| User task complete / assign / by-error | 37 | yes | ports |
+| External-task worker style | 33, plus 6 handler classes | yes | ports |
+| User task complete / assign | 26 | yes | ports |
+| BPMN error from a service task (`JavaDelegate`) | 11 | yes | ports (`CompleteTaskByErrorCmd`) |
 | Deployment, DMN evaluate | 16 | yes | ports |
-| Delegates & listeners in shared transaction | 257 classes, 73 nested engine calls | no | rewrite as workers; semantics change |
+| Delegates & listeners in shared transaction | 257 classes; 73 entry-point call sites, 85 engine calls through them, 117 engine calls in total from inside delegates | no | rewrite as workers; semantics change |
 | Queries (task, history, runtime, repository, job) | 160 | no | fewer sites than identity / authorization / filters; needs a stance |
 | History infrastructure | 12 classes | no | engine-native; document |
 | Identity / authorization / filters | 317 | no | out of scope; document |
 | Instance lifecycle, instance variables | 34 | partial (note below) | `EXECUTION_ID` is rejected for message correlation, honoured for signals and task subscriptions (§E); document |
-| Jobs / incidents / retries (ops) | 16 | partial | `FailTaskCmd` only |
+| Jobs / incidents / retries (ops) | 6, plus 10 classes | partial | `FailTaskCmd` only |
 | Engine internals (`impl.*`) | 698 imports / 201 files | no | design work, not porting |
-| CMMN | 41 | no | dead end; state it |
+| CMMN | 31, plus 10 listener classes | no | dead end; state it |
 | Delegate context reads | 807 | partial | per-adapter meta-key tables exist but mark no key as guaranteed and omit `processInstanceId`, `businessKey`, `formKey`, `retries`, `processDefinitionVersionTag` (remote only), `reason` (§I) |
-| Variable scope / typed values | 21 | partial | document adapter behaviour |
+| Local variables, removal, existence checks (`setVariableLocal`, `getVariableLocal`, `removeVariable`, `hasVariable`) | 21 | partial | document adapter behaviour (§J) |
 
 Note on instance lifecycle: 7 of the 34 sites have an API path. In `oop2013-cookshow/.../SupplierAdapter.java`, the `messageEventReceived` call (line 47) and the `setVariable` just before it (line 46) become one `CorrelateMessageCmd`, with the variable as payload (§E). Five calls are made for a known user task, and the task delivery covers them: `UserTaskSupport.getPayload(taskId)` returns the variables visible from the task (§J), and `UserTaskSupport.getTaskInformation(taskId)` carries the task's `activityId` in its meta (§I). These are `four-eyes-advanced/.../TaskListService.java:54` (`getActiveActivityIds` of the task's execution) and `:80`, and `user-task-data-cache/.../TaskDataConfiguration.java:83`, `:84` and `:86` (variable reads). The other 27 sites have no path.
 

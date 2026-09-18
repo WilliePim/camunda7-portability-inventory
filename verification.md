@@ -133,21 +133,25 @@ Engine implementation classes (`TaskServiceImpl`, …) count as their service in
 | 2L | getProcessDefinition | both | 3 | 3 | +0 | 0 | 3 | `inventory.py 2L.processDefinition` |
 | 2M | formService.getTaskFormData / getStartFormKey | both | 3 | 3 | +0 | 0 | 3 | `inventory.py 2M.forms` |
 | 3 | Start / correlate / signal | both | ~90 | 63 | -27 | 13 | 50 | `inventory.py 3.startCorrelate` = sum of 1.start.direct, 1.start.chained, 1.startByMessage, 1.correlate.direct, 1.correlate.chained, 1.signalEvent |
-| 3 | External-task worker style | both | ~40 | 39 | -1 | 6 | 33 | `inventory.py 3.externalTask` = sum of 1.ext.complete, 1.ext.handleFailure, 1.ext.handler |
-| 3 | User task complete / assign / by-error | both | ~35 | 37 | +2 | 3 | 34 | `inventory.py 3.userTask` = sum of 1.task.complete.direct, 1.task.complete.chained, 1.task.claim, 1.bpmnError |
+| 3 | External-task worker style (call sites) | both | ~40 | 33 | -7 | 6 | 27 | `inventory.py 3.externalTask` = sum of 1.ext.complete, 1.ext.handleFailure |
+| 3 | External-task worker style: handler classes | both | — | 6 |  | 0 | 6 | `inventory.py 3.externalTaskClasses` = sum of 1.ext.handler |
+| 3 | User task complete / assign | both | ~35 | 26 | -9 | 1 | 25 | `inventory.py 3.userTask` = sum of 1.task.complete.direct, 1.task.complete.chained, 1.task.claim |
+| 3 | BPMN error from a service task (JavaDelegate) | both | — | 11 |  | 2 | 9 | `inventory.py 3.serviceTaskError` = sum of 1.bpmnError |
 | 3 | Deployment, DMN evaluate | both | ~10 | 16 | +6 | 5 | 11 | `inventory.py 3.deployDmn` = sum of 1.deploy, 1.dmn |
 | 3 | Delegates & listeners: classes (both repos) | both | 231 | 257 | +26 | 26 | 231 | `inventory.py 3.delegateClasses` (delegate_scopes) |
-| 3 | Delegates & listeners: nested engine calls, entry-point sites (both repos) | both | 59 | 73 | +14 | 1 | 72 | `inventory.py 3.delegateCalls` (delegate_scopes) |
+| 3 | Delegates & listeners: entry-point call sites (both repos) | both | 59 | 73 | +14 | 1 | 72 | `inventory.py 3.delegateCalls` (delegate_scopes) |
 | 3 | Queries | both | ~135 | 160 | +25 | 9 | 151 | `inventory.py 3.queries` = sum of 2B.taskQuery.direct, 2B.taskQuery.chained, 2B.historyQuery, 2B.runtimeQuery, 2B.repositoryQuery, 2B.jobQuery |
 | 3 | History infrastructure (classes) | both | ~12 | 12 | +0 | 2 | 10 | `inventory.py 3.historyInfra` = sum of 2C.historyEventHandler, 2C.dbHistoryEventHandler, 2C.historyLevel, 2C.historyEventProducer |
 | 3 | Identity / authorization / filters | both | ~280 | 317 | +37 | 2 | 315 | `inventory.py 3.identity` = sum of 2D.identity, 2D.authorization, 2D.filter |
 | 3 | Instance lifecycle, instance variables | both | ~30 | 34 | +4 | 2 | 32 | `inventory.py 3.lifecycle` = sum of 2E.variables, 2E.signal, 2E.messageEventReceived, 2E.deleteProcessInstance, 2E.suspendActivate, 2E.modification, 2E.activeActivityIds |
-| 3 | Jobs / incidents / retries | both | ~20 | 16 | -4 | 0 | 16 | `inventory.py 3.jobs` = sum of 2F.jobOps, 2F.incidents, 2F.jobRetryCmd, 2F.incidentHandler, 2F.timerEventJobHandler |
+| 3 | Jobs / incidents / retries (call sites) | both | ~20 | 6 | -14 | 0 | 6 | `inventory.py 3.jobs` = sum of 2F.jobOps, 2F.incidents |
+| 3 | Jobs / incidents / retries: classes | both | — | 10 |  | 0 | 10 | `inventory.py 3.jobsClasses` = sum of 2F.jobRetryCmd, 2F.incidentHandler, 2F.timerEventJobHandler |
 | 3 | Engine internals: impl.* imports (both repos) | both | 615 | 698 | +83 | 81 | 617 | `inventory.py 3.implImports` |
 | 3 | Engine internals: files (both repos) | both | 176 | 201 | +25 | 25 | 176 | `inventory.py 3.implFiles` |
-| 3 | CMMN | both | ~55 | 41 | -14 | 0 | 41 | `inventory.py 3.cmmn` = sum of 2H.caseService, 2H.caseExecutionListener |
+| 3 | CMMN (call sites) | both | ~55 | 31 | -24 | 0 | 31 | `inventory.py 3.cmmn` = sum of 2H.caseService |
+| 3 | CMMN: listener classes | both | — | 10 |  | 0 | 10 | `inventory.py 3.cmmnClasses` = sum of 2H.caseExecutionListener |
 | 3 | Delegate context reads | both | ~700 | 807 | +107 | 18 | 789 | `inventory.py 3.contextReads` = sum of 2I.getVariable, 2I.setVariable, 2I.getId, 2I.getProcessInstanceId, 2I.getCurrentActivityId, 2I.getCurrentActivityName, 2I.getProcessBusinessKey, 2I.getProcessDefinitionId, 2I.getBpmnModelElementInstance, 2I.getTenantId |
-| 3 | Variable scope / typed values | both | ~20 | 21 | +1 | 0 | 21 | `inventory.py 3.variableScope` = sum of 2J.setVariableLocal, 2J.getVariableLocal, 2J.removeVariable, 2J.hasVariable |
+| 3 | Local variables, removal, existence checks | both | ~20 | 21 | +1 | 0 | 21 | `inventory.py 3.variableScope` = sum of 2J.setVariableLocal, 2J.getVariableLocal, 2J.removeVariable, 2J.hasVariable |
 
 All numeric corrections in `report.md` use the Measured column. Where the report wrote "≈" or "~", the corrected value is an exact count and the sign was dropped. No count was unreproducible: every row has a definition in `scripts/inventory.py` and a measured value.
 
