@@ -1,6 +1,5 @@
 # Field report: two open-source Camunda 7 codebases held against process-engine-api — what maps, what doesn't
 
-**Type:** discussion / documentation input, not a bug
 **Goal:** give maintainers (and anyone planning a C7 exit) a concrete, counted list of C7 usage patterns that have no expression in the API, so the "portable vs. not portable" line can be documented and effort estimated.
 
 ## Method
