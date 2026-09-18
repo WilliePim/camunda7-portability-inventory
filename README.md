@@ -84,13 +84,10 @@ Options:
 | Command | Effect |
 |---|---|
 | `python scripts/inventory.py --explain 1.start.chained` | Lists every counted site and every rejected same-name site for one row. Row ids are in `scripts/inventory.py` and in the Method column of `verification.md`. |
-| `python scripts/inventory.py --json out/inventory.json` | Also writes the table as JSON. `out/` is git-ignored. |
 | `python scripts/delegates.py --sites` | Lists every entry-point call site. |
 | `python scripts/clone.py --latest` | Fetches default-branch HEAD instead of the pinned commits and prints the new hashes. To analyse them, update the commits in `scripts/repos.py`. |
 
 `scripts/repos.py` (repositories, pinned commits, main-source rule), `scripts/javaindex.py` (import-aware Java index) and `scripts/delegate_scopes.py` (delegate scopes and entry points) are modules used by the scripts above.
-
-`adapter_facts.py` exits with status 1 when a cited adapter line no longer contains the expected source text.
 
 ## Analysed repositories
 
