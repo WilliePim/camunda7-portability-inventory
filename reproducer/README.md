@@ -9,7 +9,7 @@ Runs the embedded Camunda 7 adapter of [process-engine-adapters-camunda-7](https
 | `camunda-engine` | 7.24.0, on H2 2.3.232 in memory |
 | JUnit | 5.11.4 |
 
-Compiled for Java 21, which Camunda 7.24 lists as supported ([Supported Environments, Java](https://docs.camunda.org/manual/7.24/introduction/supported-environments/#java)). It needs a JDK 21 or newer; the wrapper uses the one in `JAVA_HOME`. Last run with Eclipse Temurin 21.0.12.1+1 on Windows 10 Pro (10.0.19045) and Maven 3.9.12 through the wrapper.
+Compiled for Java 21, which Camunda 7.24 lists as supported ([Supported Environments, Java](https://docs.camunda.org/manual/7.24/introduction/supported-environments/#java)). It needs a JDK 21; the wrapper uses the one in `JAVA_HOME`. The recorded run used Eclipse Temurin 21.0.12.1+1 and Maven 3.9.12, through the wrapper, on Windows 10 Pro, build 10.0.19045.6466.
 
 ## Run
 
@@ -22,6 +22,17 @@ One test class per bug: `./mvnw test -Dtest=Bug01SignalTenantRestrictionTest`.
 The build fails on purpose. Each bug test asserts the behaviour the API describes, so it fails while the bug exists. The tests named `observed_*` pass: they record what the adapter and the engine do and are not bug tests. Full output, with stack traces, is written to `target/surefire-reports/`.
 
 Every test starts a new engine (`EngineTestSupport`) and calls the adapter classes directly, without Spring: `SignalApiImpl`, `C7UserTaskCompletionApiImpl` and `StartProcessApiImpl`, each with the adapter's `EngineCommandExecutor`.
+
+## Testing a fix
+
+`-Dadapter.version` runs the tests against another published adapter release, for example `./mvnw test -Dadapter.version=2026.07.1`. For an unreleased fix, install the adapter from a clone of process-engine-adapters-camunda-7 and pass the version of that clone's root `pom.xml`:
+
+```sh
+./mvnw install -DskipTests -pl engine-adapter/c7-embedded-core -am   # in the adapter clone
+./mvnw test -Dadapter.version=2026.09.2-SNAPSHOT                     # here, with that version
+```
+
+With the three bugs fixed, the five bug tests pass and the three `observed_*` tests of issue 01 fail, because they record the behaviour of 2026.09.1.
 
 ## Tests and results on 2026.09.1
 
