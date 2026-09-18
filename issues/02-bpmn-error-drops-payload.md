@@ -7,7 +7,7 @@ In `c7-embedded-core`, `C7UserTaskCompletionApiImpl.completeTaskByError` passes 
 * Library version: `process-engine-adapter-camunda-platform-c7-embedded-core` 2026.09.1 (latest release), process-engine-api 1.7, Camunda 7.24.0. The line links point to commit `d2be36e` on `develop` for the adapter and `b025698` for process-engine-api; every linked file is identical in 2026.09.1 and 1.7.
 * JDK version: Eclipse Temurin 21.0.12.1+1 (build 21.0.12.1+1-LTS), a Java version Camunda 7.24 lists as supported ([Supported Environments, Java](https://docs.camunda.org/manual/7.24/introduction/supported-environments/#java)); the reproducer compiles for Java 21
 * Operating system: Windows 10 Pro, build 10.0.19045.6466
-* Complete executable reproducer: `reproducer/`, a Maven project with an embedded engine on in-memory H2 (link to follow when published). Run `./mvnw test -Dtest=Bug02UserTaskCompleteByErrorTest`.
+* Complete executable reproducer: [reproducer/](https://github.com/WilliePim/camunda7-portability-inventory/tree/main/reproducer), a Maven project with an embedded engine on in-memory H2. In that folder, with `JAVA_HOME` pointing to a JDK 21, run `./mvnw test -Dtest=Bug02UserTaskCompleteByErrorTest`.
 * Steps: use a process with a user task that has an error boundary event for the error code `REJECTED`, followed by a second user task. The error event definition stores the error message in a process variable (`camunda:errorMessageVariable="errorMessage"`), which is how the lost message is observed. The model is `reproducer/src/test/resources/user-task-error.bpmn`.
 
 ```kotlin
