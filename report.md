@@ -5,7 +5,7 @@
 
 ## Method
 
-Static inventory of main sources (tests excluded) in two public C7 codebases, held against `process-engine-api` `api` module (HEAD, September 2026). The Java sources are parsed with tree-sitter, and a call is counted only when its receiver resolves to the Camunda type in question through declarations and imports; comments are ignored. Plain grep over the same sources reproduces the old, uncorrected numbers instead: it counts commented-out code and misses calls split across lines. For example, 35 of its 56 hits for chained `startProcessInstanceBy(Key|Id)` calls are in comments, and the parse counts 27 such calls.
+Static inventory of main sources (tests excluded) in two public C7 codebases, held against `process-engine-api` `api` module at `b025698`. The Java sources are parsed with tree-sitter, and a call is counted only when its receiver resolves to the Camunda type in question through declarations and imports; comments are ignored. Plain grep over the same sources reproduces the old, uncorrected numbers instead: it counts commented-out code and misses calls split across lines. For example, 35 of its 56 hits for chained `startProcessInstanceBy(Key|Id)` calls are in comments, and the parse counts 27 such calls.
 
 | Codebase | Main `.java` files | Why |
 |---|---|---|
