@@ -4,10 +4,34 @@ This repository verifies and hosts a static inventory of how open-source Camunda
 
 | File | Content |
 |---|---|
-| [report.md](report.md) | The inventory, written as an issue for the process-engine-api maintainers. Counts corrected and sections E, I, J amended from the verification. |
+| [report.md](report.md) | Standalone field report: Camunda 7 engine usage counted in two open-source codebases and held against process-engine-api, with what maps, what does not, a summary table, and documentation asks for the maintainers of the API and its Camunda 7 adapter (section 5). It files no bugs; those are in `issues/`. |
 | [verification.md](verification.md) | Every count in `report.md`: reported vs measured, delta, method. Also: claims corrected, gaps the Camunda 7 adapter already covers, open questions. |
+| [issues/](issues/) | Drafts of three bug reports for [process-engine-adapters-camunda-7](https://github.com/bpm-crafters/process-engine-adapters-camunda-7), all in `c7-embedded-core`, written to that repository's bug template with the reproducer's results. |
+| [reproducer/](reproducer/) | Maven project that runs the embedded adapter on an in-memory Camunda 7 engine, with one failing test per bug in `issues/` ([reproducer/README.md](reproducer/README.md)). |
 | `scripts/` | Everything used to produce the numbers and citations. Runnable from the repository root. |
 | `external/` | Clones of the analysed repositories (git-ignored, created by `scripts/clone.py`). |
+
+## Running the reproducer
+
+The three bugs in `issues/` are reproduced by the Maven project in `reproducer/`. You need git, a JDK 21 and network access to Maven Central. Maven itself is not needed: the wrapper downloads Maven 3.9.12 on the first run.
+
+```sh
+git clone https://github.com/WilliePim/camunda7-portability-inventory.git camunda7-portability-inventory
+cd camunda7-portability-inventory/reproducer
+export JAVA_HOME="$HOME/.jdks/jdk-21.0.12.1+1"   # the Temurin 21 of the recorded run; use the path of your JDK 21
+./mvnw test
+```
+
+Maven runs on the JDK in `JAVA_HOME` and falls back to the first `java` on the `PATH` only when `JAVA_HOME` is unset, which can be a different JDK; set it explicitly. On macOS: `export JAVA_HOME=$(/usr/libexec/java_home -v 21)`. In PowerShell: `$env:JAVA_HOME = "$HOME\.jdks\jdk-21.0.12.1+1"`, then `.\mvnw.cmd test`.
+
+Expected result: `Tests run: 9, Failures: 3, Errors: 2` and `BUILD FAILURE`. The build fails on purpose. The five bug tests assert the behaviour the API describes, so they fail while the bugs exist; the four `observed_*` tests record what the adapter and the engine do, and pass. Full output, with stack traces, is in `target/surefire-reports/`; the result of each test is in [reproducer/README.md](reproducer/README.md).
+
+| Component | Version |
+|---|---|
+| `process-engine-adapter-camunda-platform-c7-embedded-core` | 2026.09.1, the latest release |
+| `process-engine-api`, `process-engine-api-impl` | 1.7 |
+| `camunda-engine` | 7.24.0, on H2 2.3.232 in memory |
+| JDK | Java 21, which Camunda 7.24 [lists as supported](https://docs.camunda.org/manual/7.24/introduction/supported-environments/#java); recorded run on Eclipse Temurin 21.0.12.1+1 |
 
 ## Running from a clean checkout
 
@@ -15,8 +39,8 @@ You need git, Python 3 (tested with 3.13) and network access to github.com. The 
 
 ```sh
 # 1. Get this repository
-git clone <url-or-path-of-this-repository> portability-inventory
-cd portability-inventory
+git clone https://github.com/WilliePim/camunda7-portability-inventory.git camunda7-portability-inventory
+cd camunda7-portability-inventory
 
 # 2. Python environment with the parser packages (tree-sitter, tree-sitter-java)
 python -m venv .venv
@@ -94,3 +118,7 @@ Main sources are `.java` files under `src/main/`. Test sources and build helpers
 - **No customer code.** Only the four public repositories above are analysed.
 - **Remote adapter serialization** depends on `io.holunda.c7:c7-rest-client-variables`, which is not cloned. Its rules are not verified here.
 - **Windows.** Some snippet paths exceed 260 characters. `clone.py` sets `core.longpaths=true` in each clone for git, and Python needs Windows long-path support enabled (the `LongPathsEnabled` registry setting) to read those files.
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).
