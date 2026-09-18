@@ -5,7 +5,7 @@ In `c7-embedded-core`, `SignalApiImpl.applyRestrictions` checks the tenant restr
 ### Steps to reproduce
 
 * Library version: `process-engine-adapter-camunda-platform-c7-embedded-core` 2026.09.1 (latest release), process-engine-api 1.7, Camunda 7.24.0. The line links point to commit `d2be36e` on `develop`; every linked file is identical in 2026.09.1.
-* JDK version: Oracle JDK 19.0.2 (build 19.0.2+7-44); the reproducer compiles for Java 17
+* JDK version: Eclipse Temurin 21.0.12.1+1 (build 21.0.12.1+1-LTS), a Java version Camunda 7.24 lists as supported ([Supported Environments, Java](https://docs.camunda.org/manual/7.24/introduction/supported-environments/#java)); the reproducer compiles for Java 21
 * Operating system: Windows 10 Pro, build 10.0.19045.6466
 * Complete executable reproducer: `reproducer/`, a Maven project with an embedded engine on in-memory H2 (link to follow when published). Run `./mvnw test -Dtest=Bug01SignalTenantRestrictionTest`.
 * Steps: send a signal with a single tenant restriction through the embedded adapter:
@@ -37,9 +37,9 @@ java.util.concurrent.ExecutionException: java.lang.IllegalArgumentException: Ill
 	at java.base/java.util.concurrent.CompletableFuture.reportGet(CompletableFuture.java:396)
 	at java.base/java.util.concurrent.CompletableFuture.get(CompletableFuture.java:2073)
 	at reproducer.Bug01SignalTenantRestrictionTest.tenantIdAloneSendsTheSignalToThatTenant(Bug01SignalTenantRestrictionTest.java:47)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
 Caused by: java.lang.IllegalArgumentException: Illegal restriction combination. withoutTenantId and withoutTenantId can't be provided in the same time because they are mutually exclusive.
 	at dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl.applyRestrictions(SignalApiImpl.kt:48)
 	at dev.bpmcrafters.processengineapi.adapter.c7.embedded.correlation.SignalApiImpl.sendSignal$lambda$1(SignalApiImpl.kt:30)
@@ -47,10 +47,10 @@ Caused by: java.lang.IllegalArgumentException: Illegal restriction combination. 
 	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768)
 	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.exec(CompletableFuture.java:1760)
 	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387)
-	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1311)
-	at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1841)
-	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1806)
-	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:177)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312)
+	at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188)
 ```
 
 The check fails before the signal reaches the engine. A recording wrapper around `RuntimeService` shows that the adapter creates the builder with `createSignalEvent("mySignal")`, calls `tenantId("tenant-a")` on it, and then the `require` throws: `send()` is never called, and neither waiting instance receives the signal.
